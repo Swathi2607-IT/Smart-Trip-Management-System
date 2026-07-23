@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="TMS Journey — Smart Trip Management System with real-time weather, custom itineraries, and seamless booking.">
+  <title>{% block title %}TMS Journey{% endblock %} | Trip Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>">
+</head>
+<body>
+
+<!-- ── TOAST CONTAINER ─────────────────────────────── -->
+<div class="toast-container" id="toastContainer">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="toast" data-type="{{ category }}" style="border-left:4px solid {% if category=='success' %}#10b981{% elif category=='danger' %}#ef4444{% elif category=='warning' %}#f59e0b{% else %}#6366f1{% endif %};">
+          <div style="display:flex;align-items:center;gap:.75rem;">
+            <span style="font-size:1.2rem;">{% if category=='success' %}✅{% elif category=='danger' %}❌{% elif category=='warning' %}⚠️{% else %}ℹ️{% endif %}</span>
+            <span style="font-weight:600;color:var(--text-main);">{{ message }}</span>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+</div>
+
+<!-- ── NAVBAR ─────────────────────────────────────── -->
+<nav class="navbar" id="mainNav">
+  <a href="{{ url_for('index') }}" class="nav-brand">
+    🧭 TMS Journey
+  </a>
+
+  <ul class="nav-links">
+    {% if session.get('role') == 'admin' %}
+      <li><a href="{{ url_for('admin_dashboard') }}" class="{% if request.endpoint == 'admin_dashboard' %}active{% endif %}">📊 Dashboard</a></li>
+      <li><a href="{{ url_for('manage_bookings') }}">📋 Bookings</a></li>
+      <li><a href="{{ url_for('manage_destinations') }}">🗺 Destinations</a></li>
+      <li><a href="{{ url_for('manage_guides') }}">🧑‍✈️ Guides</a></li>
+      <li><a href="{{ url_for('index') }}">🌐 View Site</a></li>
+      <li><a href="{{ url_for('logout') }}" class="nav-btn">Logout</a></li>
+    {% elif session.get('role') == 'guide' %}
+      <li><a href="{{ url_for('guide_dashboard') }}">🏠 Dashboard</a></li>
+      <li><a href="{{ url_for('index') }}">🌐 Home</a></li>
+      <li><a href="{{ url_for('logout') }}" class="nav-btn">Logout</a></li>
+    {% else %}
+      <li><a href="{{ url_for('index') }}">Home</a></li>
+      <li><a href="{{ url_for('destinations') }}">Packages</a></li>
+      {% if session.get('user_id') %}
+        <li><a href="{{ url_for('my_bookings') }}">My Trips</a></li>
+        <li><a href="{{ url_for('user_dashboard') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('logout') }}" class="nav-btn">Logout ↗</a></li>
+      {% else %}
+        <li><a href="{{ url_for('login') }}">Login</a></li>
+        <li><a href="{{ url_for('register') }}" class="nav-btn">Sign Up Free</a></li>
+      {% endif %}
+    {% endif %}
+    <!-- Dark Mode Toggle -->
+    <li>
+      <button class="dark-toggle" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode"></button>
+    </li>
+  </ul>
+</nav>
+
+<!-- ── MAIN CONTENT ───────────────────────────────────── -->
+<main style="flex:1">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- ── FOOTER ─────────────────────────────────────────── -->
+{% block footer %}
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">🧭 TMS Journey</div>
+        <p class="footer-desc">Your intelligent travel companion. Book smart, travel safe, explore more with real-time weather, custom itineraries, and expert guides.</p>
+      </div>
+      <div>
+        <div class="footer-heading">Explore</div>
+        <ul class="footer-links">
+          <li><a href="{{ url_for('destinations') }}">All Packages</a></li>
+          <li><a href="{{ url_for('index') }}#features">Features</a></li>
+          <li><a href="{{ url_for('login') }}">Plan My Trip</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-heading">Account</div>
+        <ul class="footer-links">
+          {% if session.get('user_id') %}
+            <li><a href="{{ url_for('user_dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('my_bookings') }}">My Bookings</a></li>
+            <li><a href="{{ url_for('logout') }}">Logout</a></li>
+          {% else %}
+            <li><a href="{{ url_for('login') }}">Login</a></li>
+            <li><a href="{{ url_for('register') }}">Register</a></li>
+          {% endif %}
+        </ul>
+      </div>
+      <div>
+        <div class="footer-heading">Support</div>
+        <ul class="footer-links">
+          <li><a href="#">Help Center</a></li>
+          <li><a href="#">Cancellation Policy</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 TMS Journey. Built with Flask + SQLite.</span>
+      <span>Crafted with ❤️ for travellers worldwide</span>
+    </div>
+  </div>
+</footer>
+{% endblock %}
+
+<script>
+// ── THEME TOGGLE ──────────────────────────────────
+const html = document.documentElement;
+const toggleBtn = document.getElementById('themeToggle');
+const savedTheme = localStorage.getItem('tms-theme') || 'light';
+html.setAttribute('data-theme', savedTheme);
+
+toggleBtn?.addEventListener('click', () => {
+  const current = html.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('tms-theme', next);
+});
+
+// ── TOAST AUTO-DISMISS ───────────────────────────
+document.querySelectorAll('.toast').forEach((toast, i) => {
+  setTimeout(() => {
+    toast.classList.add('hiding');
+    setTimeout(() => toast.remove(), 350);
+  }, 3500 + i * 300);
+});
+
+// ── SCROLL ANIMATIONS ────────────────────────────
+const revealEls = document.querySelectorAll('.reveal');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+}, { threshold: 0.1 });
+revealEls.forEach(el => observer.observe(el));
+
+// ── NAVBAR SCROLL EFFECT ─────────────────────────
+const nav = document.getElementById('mainNav');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 60) {
+    nav?.classList.add('scrolled');
+  } else {
+    nav?.classList.remove('scrolled');
+  }
+}, { passive: true });
+</script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

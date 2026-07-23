@@ -1,0 +1,119 @@
+{% extends 'layout.html' %}
+{% block title %}All Destinations{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <h1>🌍 Explore All Packages</h1>
+    <p>Discover handpicked destinations with live weather and smart pricing</p>
+  </div>
+</div>
+
+<div class="container section-sm">
+
+  <!-- Search & Filter Bar -->
+  <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-bottom:2.5rem">
+    <div class="search-bar" style="flex:1;min-width:260px">
+      <input type="text" id="searchInput" placeholder="🔍  Search destination..." oninput="filterCards()">
+      <button type="button">Go</button>
+    </div>
+    <select id="weatherFilter" class="form-control" style="width:auto;border-radius:var(--radius-full);padding:.75rem 1.25rem" onchange="filterCards()">
+      <option value="">All Weather</option>
+      <option value="sunny">☀️ Sunny</option>
+      <option value="cloudy">⛅ Cloudy</option>
+      <option value="rainy">🌧 Rainy</option>
+      <option value="stormy">⛈ Stormy</option>
+    </select>
+    <select id="priceFilter" class="form-control" style="width:auto;border-radius:var(--radius-full);padding:.75rem 1.25rem" onchange="filterCards()">
+      <option value="">All Prices</option>
+      <option value="budget">Budget (₹0–5000)</option>
+      <option value="mid">Mid-Range (₹5000–8000)</option>
+      <option value="premium">Premium (₹8000+)</option>
+    </select>
+  </div>
+
+  <!-- Results Count -->
+  <div style="color:var(--text-muted);font-size:.9rem;margin-bottom:1.5rem" id="resultsCount">
+    Showing <strong id="shownCount">{{ destinations|length }}</strong> of {{ destinations|length }} destinations
+  </div>
+
+  <!-- Cards Grid -->
+  <div class="grid grid-cols-3" id="destGrid">
+    {% for dest in destinations %}
+    <div class="card reveal dest-card-item"
+         data-name="{{ dest.name | lower }}"
+         data-weather="{{ dest.weather_status | lower }}"
+         data-price="{{ dest.base_price }}">
+      <div class="card-img-wrap">
+        <img src="{{ dest.image_url }}" alt="{{ dest.name }}" class="card-img" loading="lazy">
+        <div style="position:absolute;top:.75rem;right:.75rem">
+          <span class="badge {% if dest.weather_status == 'Rainy' %}badge-rainy{% elif dest.weather_status == 'Cloudy' %}badge-cloudy{% elif dest.weather_status == 'Stormy' %}badge-stormy{% elif dest.weather_status == 'Snowy' %}badge-snowy{% elif dest.weather_status == 'Clear' %}badge-clear{% else %}badge-sunny{% endif %}">
+            {{ dest.weather_icon }}
+            {{ dest.weather_temp }}°C
+          </span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+          <h3 class="card-title" style="margin-bottom:0">{{ dest.name }}</h3>
+          <span style="font-weight:700;color:var(--amber-500);font-size:.9rem">⭐ {{ "%.1f"|format(dest.avg_rating) }}</span>
+        </div>
+        <p class="card-text">{{ dest.description[:110] }}...</p>
+        <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:1rem">Based on {{ dest.review_count }} reviews</div>
+        <div style="margin-top:auto;padding-top:.75rem;border-top:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:.75rem;color:var(--text-muted)">Base price / day</div>
+            <div style="font-weight:800;font-size:1.25rem;color:var(--primary)">₹{{ "{:,.0f}".format(dest.base_price) }}</div>
+          </div>
+          <a href="{{ url_for('destination_details', id=dest.id) }}" class="btn btn-primary btn-sm">View Details →</a>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div style="grid-column:1/-1;text-align:center;padding:4rem;color:var(--text-muted)">
+      <div style="font-size:4rem;margin-bottom:1rem">🗺</div>
+      <p>No destinations found. Admin needs to add some!</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- No Results -->
+  <div id="noResults" style="display:none;text-align:center;padding:3rem;color:var(--text-muted)">
+    <div style="font-size:3rem;margin-bottom:1rem">🔍</div>
+    <p>No destinations match your search. Try different filters.</p>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterCards() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const weather = document.getElementById('weatherFilter').value;
+  const price = document.getElementById('priceFilter').value;
+  const cards = document.querySelectorAll('.dest-card-item');
+  let shown = 0;
+
+  cards.forEach(card => {
+    const nameMatch = card.dataset.name.includes(search);
+    const weatherMatch = !weather || card.dataset.weather.includes(weather);
+    let priceMatch = true;
+    const p = parseFloat(card.dataset.price);
+    if (price === 'budget') priceMatch = p <= 5000;
+    else if (price === 'mid') priceMatch = p > 5000 && p <= 8000;
+    else if (price === 'premium') priceMatch = p > 8000;
+
+    if (nameMatch && weatherMatch && priceMatch) {
+      card.style.display = '';
+      shown++;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+
+  document.getElementById('shownCount').textContent = shown;
+  document.getElementById('noResults').style.display = shown === 0 ? 'block' : 'none';
+}
+</script>
+{% endblock %}

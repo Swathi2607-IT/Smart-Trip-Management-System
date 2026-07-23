@@ -1,0 +1,110 @@
+{% extends 'layout.html' %}
+{% block title %}Payment{% endblock %}
+
+{% block content %}
+<div class="container section-sm" style="max-width:560px">
+
+  <div style="text-align:center;margin-bottom:2rem">
+    <div style="font-size:4rem;margin-bottom:.75rem">💳</div>
+    <h1 style="font-size:2rem">Complete Payment</h1>
+    <p class="text-muted">Booking #{{ booking.id }} · Secure UPI Simulation</p>
+  </div>
+
+  <!-- Amount Due -->
+  <div style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:var(--radius-lg);padding:2rem;text-align:center;color:white;margin-bottom:2rem;box-shadow:0 12px 40px rgba(99,102,241,.4)">
+    <div style="font-size:.875rem;opacity:.8;margin-bottom:.5rem">Total Amount Due</div>
+    <div style="font-size:3rem;font-weight:900;letter-spacing:-0.02em">₹{{ "{:,.0f}".format(booking.total_cost) }}</div>
+    <div style="font-size:.875rem;opacity:.8;margin-top:.5rem">
+      📍 {{ booking.transport_mode }} · 📅 {{ booking.start_date }} · {{ booking.duration }} days
+    </div>
+  </div>
+
+  <!-- UPI Payment Card -->
+  <div class="glass-panel mb-3">
+    <h3 style="margin-bottom:1.5rem;display:flex;align-items:center;gap:.6rem">
+      <span style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#4f46e5);display:inline-flex;align-items:center;justify-content:center;color:white;font-size:.9rem">₹</span>
+      Pay via UPI
+    </h3>
+
+    <!-- Simulated UPI QR -->
+    <div style="background:var(--gray-100);border:2px dashed var(--gray-200);border-radius:var(--radius-md);padding:2rem;text-align:center;margin-bottom:1.5rem">
+      <div style="font-size:5rem;margin-bottom:.5rem">🔲</div>
+      <div style="font-weight:700;margin-bottom:.25rem">Scan & Pay</div>
+      <div style="font-size:.8125rem;color:var(--text-muted)">UPI ID: tmsjourney@upi</div>
+      <div style="margin-top:1rem;font-size:.75rem;color:var(--text-muted)">(Simulated – No real transaction)</div>
+    </div>
+
+    <!-- Or enter UPI ID -->
+    <div class="auth-divider">or enter UPI ID</div>
+
+    <div class="form-group">
+      <label class="form-label">UPI ID / Mobile Number</label>
+      <div class="input-group">
+        <span class="input-icon">📱</span>
+        <input type="text" class="form-control" id="upiInput" placeholder="yourname@upi or 9876543210" value="demo@upi">
+      </div>
+    </div>
+
+    <!-- Payment Methods -->
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.5rem">
+      {% for app, icon in [('GPay','🟢'),('PhonePe','🟣'),('Paytm','💙'),('BHIM','🔵')] %}
+      <div style="flex:1;min-width:80px;border:2px solid var(--gray-200);border-radius:var(--radius-md);padding:.75rem;text-align:center;cursor:pointer;transition:all .3s;font-size:.8rem;font-weight:600" 
+           onclick="this.style.borderColor='var(--primary)';this.style.background='rgba(99,102,241,.08)';document.querySelectorAll('.pay-chip').forEach(x=>x!==this&&(x.style.borderColor='var(--gray-200)',x.style.background=''))" 
+           class="pay-chip">
+        <div style="font-size:1.5rem;margin-bottom:.25rem">{{ icon }}</div>{{ app }}
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Confirm Payment -->
+    <form method="POST" action="{{ url_for('payment') }}" id="payForm">
+      <input type="hidden" name="booking_id" value="{{ booking.id }}">
+      <button type="submit" name="pay_now" value="1" class="btn btn-success btn-full btn-lg" id="payBtn" style="position:relative;overflow:hidden">
+        <span id="btnText">🔐 Confirm Payment · ₹{{ "{:,.0f}".format(booking.total_cost) }}</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Security Note -->
+  <div style="text-align:center;font-size:.8125rem;color:var(--text-muted);display:flex;align-items:center;justify-content:center;gap:.5rem">
+    🔒 256-bit SSL encrypted · Simulated payment environment
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('payForm')?.addEventListener('submit', function(e) {
+  const btn = document.getElementById('payBtn');
+  const txt = document.getElementById('btnText');
+  
+  // Prevent double click
+  if(btn.dataset.locked === 'true') {
+    e.preventDefault();
+    return;
+  }
+  btn.dataset.locked = 'true';
+  
+  // Instant visual feedback
+  btn.style.opacity = '0.8';
+  btn.style.cursor = 'not-allowed';
+  txt.innerHTML = '<span class="loading-spinner"></span> Processing Transaction...';
+});
+</script>
+<style>
+.loading-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255,255,255,.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.8s ease-in-out infinite;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+{% endblock %}
+

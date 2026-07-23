@@ -1,0 +1,115 @@
+{% extends 'layout.html' %}
+{% block title %}Manage Bookings{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  <aside class="sidebar">
+    <div style="padding:.5rem .75rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:.5rem">
+      <div style="font-weight:800;color:white;font-size:1rem">🛠️ Admin Panel</div>
+    </div>
+    <div class="sidebar-section">Overview</div>
+    <a href="{{ url_for('admin_dashboard') }}" class="sidebar-link"><span class="icon">📊</span><span>Dashboard</span></a>
+    <div class="sidebar-section">Management</div>
+    <a href="{{ url_for('manage_bookings') }}" class="sidebar-link active"><span class="icon">📋</span><span>Bookings</span></a>
+    <a href="{{ url_for('manage_destinations') }}" class="sidebar-link"><span class="icon">🌍</span><span>Destinations</span></a>
+    <a href="{{ url_for('manage_guides') }}" class="sidebar-link"><span class="icon">🧑‍✈️</span><span>Guides</span></a>
+    <a href="{{ url_for('manage_feedback') }}" class="sidebar-link"><span class="icon">⭐</span><span>Feedback</span></a>
+    <div class="sidebar-section">System</div>
+    <a href="{{ url_for('index') }}" class="sidebar-link"><span class="icon">🌐</span><span>View Site</span></a>
+    <a href="{{ url_for('logout') }}" class="sidebar-link" style="color:#f87171"><span class="icon">🚪</span><span>Logout</span></a>
+  </aside>
+
+  <main class="dashboard-main">
+    <div style="margin-bottom:1.75rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
+      <div>
+        <h1 style="font-size:1.5rem">📋 All Bookings</h1>
+        <p class="text-muted">{{ bookings|length }} total bookings</p>
+      </div>
+    </div>
+
+    <!-- Status Filter -->
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem">
+      <button class="btn btn-primary btn-sm" onclick="filterAdmin(this,'all')">All</button>
+      <button class="btn btn-secondary btn-sm" onclick="filterAdmin(this,'pending')">⏳ Pending</button>
+      <button class="btn btn-secondary btn-sm" onclick="filterAdmin(this,'confirmed')">✅ Confirmed</button>
+      <button class="btn btn-secondary btn-sm" onclick="filterAdmin(this,'cancelled')">❌ Cancelled</button>
+      <button class="btn btn-secondary btn-sm" onclick="filterAdmin(this,'completed')">🏁 Completed</button>
+    </div>
+
+    <div class="table-wrap">
+      <table class="data-table" id="bookingsTable">
+        <thead>
+          <tr><th>#</th><th>User</th><th>Destination</th><th>Dates</th><th>Pax</th><th>Total</th><th>Guide</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          {% for b in bookings %}
+          <tr data-status="{{ b.status | lower }}">
+            <td style="font-weight:700;color:var(--primary)">#{{ b.id }}</td>
+            <td>
+              <div style="font-weight:600;font-size:.9rem">{{ b.user_name }}</div>
+              <div style="font-size:.75rem;color:var(--text-muted)">{{ b.user_email }}</div>
+            </td>
+            <td style="font-weight:600">{{ b.dest_name }}</td>
+            <td style="font-size:.85rem">
+              <div>{{ b.start_date }}</div>
+              <div style="color:var(--text-muted)">{{ b.duration }}d · {{ b.transport_mode }}</div>
+            </td>
+            <td>{{ b.passengers }}</td>
+            <td style="font-weight:700">₹{{ "{:,.0f}".format(b.total_cost) }}</td>
+            <td>
+              {% if b.guide_requested %}
+                {% if b.guide_name %}
+                  <div style="margin-bottom:0.25rem">
+                    <span class="status-badge" style="background:#def7ec;color:#03543f;font-size:0.75rem;border:1px solid #84e1bc">🧑‍✈️ {{ b.guide_name }}</span>
+                  </div>
+                  <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:0.25rem">Status: <strong>{{ b.guide_status }}</strong></div>
+                {% else %}
+                  <div style="font-size:0.75rem;color:var(--primary);font-weight:700;margin-bottom:0.25rem">⚠️ {{ b.guide_status }}</div>
+                {% endif %}
+                
+                <form action="{{ url_for('manage_bookings') }}" method="POST" style="display:flex;gap:.25rem">
+                  <input type="hidden" name="assign_guide" value="1">
+                  <input type="hidden" name="booking_id" value="{{ b.id }}">
+                  <select name="guide_id" class="form-control" style="font-size:0.7rem;padding:0.25rem;width:80px">
+                    <option value="">Re-assign</option>
+                    {% for g in guides %}
+                    <option value="{{ g.id }}">{{ g.name }}</option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit" class="btn btn-sm btn-success" style="padding:0.2rem 0.4rem">✓</button>
+                </form>
+              {% else %}
+                <span style="font-size:0.75rem;color:var(--text-muted)">Not Requested</span>
+              {% endif %}
+            </td>
+            <td><span class="status-badge status-{{ b.status | lower }}">{{ b.status }}</span></td>
+            <td>
+              {% if b.status == 'Confirmed' %}
+              <a href="{{ url_for('itinerary', booking_id=b.id) }}" class="btn btn-sm btn-primary">🗺</a>
+              {% elif b.status == 'Pending' %}
+              <span style="font-size:.75rem;color:var(--text-muted)">Unpaid</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="9" style="text-align:center;padding:3rem;color:var(--text-muted)">No bookings found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterAdmin(btn, filter) {
+  document.querySelectorAll('#bookingsTable .btn').forEach(b => b.className = 'btn btn-secondary btn-sm');
+  btn.className = 'btn btn-primary btn-sm';
+  document.querySelectorAll('#bookingsTable tbody tr[data-status]').forEach(row => {
+    row.style.display = filter === 'all' || row.dataset.status === filter ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

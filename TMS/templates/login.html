@@ -1,0 +1,59 @@
+{% extends 'layout.html' %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <span class="auth-logo">🧭</span>
+    <h1 class="auth-title">Welcome Back</h1>
+    <p class="auth-sub">Sign in to manage your trips and adventures</p>
+
+    <form method="POST" action="{{ url_for('login') }}" id="loginForm">
+      <div class="form-group">
+        <label class="form-label" for="email">Email Address</label>
+        <div class="input-group">
+          <span class="input-icon">📧</span>
+          <input type="email" id="email" name="email" class="form-control"
+                 required placeholder="you@example.com" autocomplete="email">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <div class="input-group">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="password" name="password" class="form-control"
+                 required placeholder="••••••••" autocomplete="current-password">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full" id="loginBtn">
+        Sign In →
+      </button>
+    </form>
+
+    <div class="auth-divider">or</div>
+
+    <p style="text-align:center;font-size:.9375rem;">
+      Don't have an account?
+      <a href="{{ url_for('register') }}" style="font-weight:700;color:var(--primary);">Create one free</a>
+    </p>
+
+    <div class="test-creds">
+      <strong>🔑 Test Credentials</strong>
+      <p>👨‍💼 Admin: <code>admin@tms.com</code> / <strong>password123</strong></p>
+      <p>👤 User: <code>john@example.com</code> / <strong>password123</strong></p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('loginForm').addEventListener('submit', function() {
+  const btn = document.getElementById('loginBtn');
+  btn.textContent = 'Signing In...';
+  btn.disabled = true;
+});
+</script>
+{% endblock %}

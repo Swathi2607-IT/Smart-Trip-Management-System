@@ -1,0 +1,104 @@
+{% extends 'layout.html' %}
+{% block title %}Create Account{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card" style="max-width:480px">
+    <span class="auth-logo">✈️</span>
+    <h1 class="auth-title">Join TMS Journey</h1>
+    <p class="auth-sub">Create your free account and start planning</p>
+
+    <form method="POST" action="{{ url_for('register') }}" id="regForm">
+      <div class="grid grid-cols-2" style="gap:1rem">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" for="name">Full Name</label>
+          <div class="input-group">
+            <span class="input-icon">👤</span>
+            <input type="text" id="name" name="name" class="form-control"
+                   required placeholder="John Doe">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" for="phone">Phone</label>
+          <div class="input-group">
+            <span class="input-icon">📱</span>
+            <input type="tel" id="phone" name="phone" class="form-control"
+                   required placeholder="9876543210">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group mt-2">
+        <label class="form-label" for="email">Email Address</label>
+        <div class="input-group">
+          <span class="input-icon">📧</span>
+          <input type="email" id="email" name="email" class="form-control"
+                 required placeholder="you@example.com">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <div class="input-group">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="password" name="password" class="form-control"
+                 required placeholder="Minimum 6 characters" minlength="6">
+        </div>
+        <div id="pwStrength" class="form-hint"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password2">Confirm Password</label>
+        <div class="input-group">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="password2" name="password2" class="form-control"
+                 required placeholder="Re-enter password">
+        </div>
+        <div id="pwMatch" class="form-hint"></div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full" id="regBtn">
+        Create Account →
+      </button>
+    </form>
+
+    <div class="auth-divider">or</div>
+
+    <p style="text-align:center;font-size:.9375rem;">
+      Already have an account?
+      <a href="{{ url_for('login') }}" style="font-weight:700;color:var(--primary);">Sign In</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const pw = document.getElementById('password');
+const pw2 = document.getElementById('password2');
+const strength = document.getElementById('pwStrength');
+const matchHint = document.getElementById('pwMatch');
+
+pw.addEventListener('input', () => {
+  const v = pw.value;
+  if (v.length < 6) strength.textContent = '⚠️ Too short';
+  else if (v.length < 10) strength.textContent = '✅ Good password';
+  else strength.textContent = '💪 Strong password';
+});
+
+pw2.addEventListener('input', () => {
+  if (pw2.value === pw.value) matchHint.textContent = '✅ Passwords match';
+  else matchHint.textContent = '❌ Passwords do not match';
+});
+
+document.getElementById('regForm').addEventListener('submit', function(e) {
+  if (pw.value !== pw2.value) {
+    e.preventDefault();
+    matchHint.textContent = '❌ Passwords do not match';
+    return;
+  }
+  document.getElementById('regBtn').textContent = 'Creating Account...';
+  document.getElementById('regBtn').disabled = true;
+});
+</script>
+{% endblock %}

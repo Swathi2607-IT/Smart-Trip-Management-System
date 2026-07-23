@@ -1,0 +1,72 @@
+{% extends 'layout.html' %}
+{% block title %}Manage Commissions - Admin{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">Admin Panel</div>
+    <a href="{{ url_for('admin_dashboard') }}" class="sidebar-link">
+      <span class="icon">📊</span><span>Dashboard</span>
+    </a>
+    <a href="{{ url_for('manage_destinations') }}" class="sidebar-link">
+      <span class="icon">📍</span><span>Destinations</span>
+    </a>
+    <a href="{{ url_for('manage_hotels') }}" class="sidebar-link">
+      <span class="icon">🏨</span><span>Hotels</span>
+    </a>
+    <a href="{{ url_for('manage_bookings') }}" class="sidebar-link">
+      <span class="icon">📅</span><span>Bookings</span>
+    </a>
+    <a href="{{ url_for('manage_guides') }}" class="sidebar-link">
+      <span class="icon">🧑‍✈️</span><span>Guides</span>
+    </a>
+    <a href="{{ url_for('manage_commissions') }}" class="sidebar-link active">
+      <span class="icon">💰</span><span>Commissions</span>
+    </a>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="dashboard-main">
+    <div style="margin-bottom:2rem">
+      <h1 class="page-title">💰 Guide Commissions</h1>
+      <p style="color:var(--text-muted)">Tracking guide earnings per trip (10% of package cost).</p>
+    </div>
+
+    <!-- Commissions Table -->
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Guide</th>
+            <th>Booking #</th>
+            <th>Destination</th>
+            <th>Trip Cost</th>
+            <th>Commission Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for comm in commissions %}
+          <tr>
+            <td>#{{ comm.id }}</td>
+            <td><strong>{{ comm.guide_name }}</strong></td>
+            <td>#{{ comm.booking_id }}</td>
+            <td>{{ comm.dest_name }}</td>
+            <td>₹{{ comm.total_cost }}</td>
+            <td style="color:var(--success);font-weight:600">₹{{ comm.amount }}</td>
+            <td>
+              <span class="status-badge status-{{ comm.status | lower }}">{{ comm.status }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not commissions %}
+          <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">No commissions recorded yet. Assign a guide to a booking to generate one!</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+{% endblock %}

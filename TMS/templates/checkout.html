@@ -1,0 +1,164 @@
+{% extends 'layout.html' %}
+{% block title %}Review & Confirm{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <h1>🧾 Review Your Booking</h1>
+    <p>Check all details before proceeding to payment</p>
+  </div>
+</div>
+
+<div class="container section-sm" style="max-width:780px">
+
+  <!-- Booking Summary Card -->
+  <div class="glass-panel mb-4">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.75rem;flex-wrap:wrap;gap:1rem">
+      <h2 style="font-size:1.4rem">✅ Booking #{{ booking_id }}</h2>
+      <span class="status-badge status-pending">Pending Payment</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem 2rem">
+      <div>
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:.35rem">Traveller</div>
+        <div style="font-weight:600">{{ session.name }}</div>
+      </div>
+      <div>
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:.35rem">Passengers</div>
+        <div style="font-weight:600">{{ passengers }} person(s)</div>
+      </div>
+      <div>
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:.35rem">Travel Date</div>
+        <div style="font-weight:600">{{ actual_start_date.strftime('%d %b %Y') }}</div>
+      </div>
+      <div>
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:.35rem">Return Date</div>
+        <div style="font-weight:600">{{ end_date_obj.strftime('%d %b %Y') }}</div>
+      </div>
+      <div>
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:.35rem">Duration</div>
+        <div style="font-weight:600">{{ duration }} days</div>
+      </div>
+      <div>
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:.35rem">Transport</div>
+        <div style="font-weight:600">
+          {% if transport_mode=='Bus' %}🚌{% elif transport_mode=='Train' %}🚆{% elif transport_mode=='Flight' %}✈️{% else %}🚶{% endif %}
+          {{ transport_mode }}
+        </div>
+      </div>
+      <div>
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:.35rem">Trip Start Mode</div>
+        <div style="font-weight:600">{{ trip_start_mode }}</div>
+      </div>
+      <div>
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:.35rem">Booking Date</div>
+        <div style="font-weight:600">{{ start_date_obj.strftime('%d %b %Y') }}</div>
+      </div>
+      <div>
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:.35rem">Accommodation</div>
+        <div style="font-weight:600">{% if is_hotel_booked %}🏨 Booked{% else %}🚫 Self-Arranged{% endif %}</div>
+      </div>
+      <div>
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:.35rem">Local City Travel</div>
+        <div style="font-weight:600">{% if local_transport_req %}✅ Requested{% else %}🚫 Not Needed{% endif %}</div>
+      </div>
+      <div>
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:.35rem">Guide Service</div>
+        <div style="font-weight:600">{% if guide_requested %}🧑‍✈️ Requested{% else %}🚫 Not Needed{% endif %}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Price Breakdown -->
+  <div class="price-breakdown mb-4">
+    <h3 style="margin-bottom:1.25rem">💰 Price Breakdown</h3>
+    <div class="price-row">
+      <span class="label">Package (₹{{ "{:,.0f}".format(dest_base_price) }} × {{ duration }} days × {{ passengers }} pax)</span>
+      <span class="amount">₹{{ "{:,.0f}".format(package_cost) }}</span>
+    </div>
+    <div class="price-row">
+      <span class="label">Transport ({{ transport_mode }} × {{ passengers }} pax)</span>
+      <span class="amount">₹{{ "{:,.0f}".format(transport_cost) }}</span>
+    </div>
+    {% if is_hotel_booked %}
+    <div class="price-row">
+      <span class="label">Hotel Stay ({{ duration - 1 if duration > 1 else 1 }} nights)</span>
+      <span class="amount">₹{{ "{:,.0f}".format(hotel_cost) }}</span>
+    </div>
+    {% endif %}
+    {% if local_transport_req %}
+    <div class="price-row">
+      <span class="label">Local City Transport ({{ duration }} days)</span>
+      <span class="amount">₹{{ "{:,.0f}".format(local_transport_cost) }}</span>
+    </div>
+    {% endif %}
+    {% if guide_requested %}
+    <div class="price-row">
+      <span class="label">Guide Service ({{ duration }} days)</span>
+      <span class="amount">₹{{ "{:,.0f}".format(guide_cost) }}</span>
+    </div>
+    {% endif %}
+    <div class="price-row total">
+      <span class="label">Total Amount Due</span>
+      <span class="amount">₹{{ "{:,.0f}".format(total_cost) }}</span>
+    </div>
+  </div>
+
+  <!-- Cancellation Policy -->
+  <div class="alert alert-info mb-4">
+    ℹ️ <strong>Cancellation Policy:</strong> Cancel 5+ days before travel for a 100% refund · 2–5 days for 50% · No refund within 2 days.
+  </div>
+
+  <!-- Action Buttons -->
+  <div style="display:flex;gap:1rem;flex-wrap:wrap">
+    <form method="POST" action="{{ url_for('payment') }}" style="flex:1">
+      <input type="hidden" name="booking_id" value="{{ booking_id }}">
+      <button type="submit" class="btn btn-primary btn-full btn-lg" id="proceedBtn">
+        <span id="btnText">Proceed to Payment (₹{{ "{:,.0f}".format(total_cost) }}) →</span>
+      </button>
+    </form>
+    <form method="POST" action="{{ url_for('cancel_pending') }}">
+      <input type="hidden" name="booking_id" value="{{ booking_id }}">
+      <button type="submit" class="btn btn-danger btn-lg" onclick="return confirm('Cancel this pending booking?')">
+        ✕ Cancel
+      </button>
+    </form>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('payForm')?.addEventListener('submit', function(e) {
+  const btn = document.getElementById('payBtn');
+  const txt = document.getElementById('btnText');
+  
+  if(btn.dataset.locked === 'true') {
+    e.preventDefault();
+    return;
+  }
+  btn.dataset.locked = 'true';
+
+  // Instant visual feedback
+  txt.innerHTML = '<span class="loading-spinner"></span> Processing Payment...';
+  btn.style.opacity = '0.7';
+  btn.style.cursor = 'not-allowed';
+});
+</script>
+<style>
+.loading-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255,255,255,.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.8s ease-in-out infinite;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+{% endblock %}
+

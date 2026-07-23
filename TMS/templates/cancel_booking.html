@@ -1,0 +1,90 @@
+{% extends 'layout.html' %}
+{% block title %}Cancel Booking{% endblock %}
+
+{% block content %}
+<div class="container section-sm" style="max-width:560px">
+
+  <div style="text-align:center;margin-bottom:2rem">
+    <div style="font-size:4rem;margin-bottom:.75rem">❌</div>
+    <h1>Cancel Your Booking</h1>
+    <p class="text-muted">Booking #{{ booking.id }}</p>
+  </div>
+
+  <!-- Refund Policy Card -->
+  <div style="border-radius:var(--radius-lg);overflow:hidden;margin-bottom:2rem;box-shadow:var(--shadow-md)">
+    {% if days_diff > 5 %}
+    <div style="background:linear-gradient(135deg,var(--secondary),var(--secondary-dark));color:white;padding:1.5rem;text-align:center">
+      <div style="font-size:2rem;margin-bottom:.5rem">💚</div>
+      <div style="font-size:1.4rem;font-weight:800">Full Refund</div>
+      <div style="opacity:.9">{{ days_diff }} days before travel → 100% refund</div>
+    </div>
+    {% elif days_diff >= 2 %}
+    <div style="background:linear-gradient(135deg,#f59e0b,#d97706);color:white;padding:1.5rem;text-align:center">
+      <div style="font-size:2rem;margin-bottom:.5rem">💛</div>
+      <div style="font-size:1.4rem;font-weight:800">50% Refund</div>
+      <div style="opacity:.9">{{ days_diff }} days before travel → 50% refund</div>
+    </div>
+    {% else %}
+    <div style="background:linear-gradient(135deg,var(--danger),#dc2626);color:white;padding:1.5rem;text-align:center">
+      <div style="font-size:2rem;margin-bottom:.5rem">❌</div>
+      <div style="font-size:1.4rem;font-weight:800">No Refund</div>
+      <div style="opacity:.9">Less than 2 days before travel</div>
+    </div>
+    {% endif %}
+    <div style="background:var(--white);border:1px solid var(--gray-200);border-top:none;padding:1.5rem">
+      <table style="width:100%;font-size:.9375rem">
+        <tr style="border-bottom:1px solid var(--gray-100)">
+          <td style="padding:.6rem 0;color:var(--text-muted)">Travel Date</td>
+          <td style="padding:.6rem 0;font-weight:600;text-align:right">{{ booking.start_date }}</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--gray-100)">
+          <td style="padding:.6rem 0;color:var(--text-muted)">Days Until Trip</td>
+          <td style="padding:.6rem 0;font-weight:600;text-align:right">{{ days_diff }} days</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--gray-100)">
+          <td style="padding:.6rem 0;color:var(--text-muted)">Amount Paid</td>
+          <td style="padding:.6rem 0;font-weight:600;text-align:right">₹{{ "{:,.0f}".format(booking.total_cost) }}</td>
+        </tr>
+        <tr>
+          <td style="padding:.75rem 0;font-weight:700">Refund Amount</td>
+          <td style="padding:.75rem 0;font-weight:800;text-align:right;font-size:1.2rem;color:{% if refund_amount > 0 %}var(--secondary){% else %}var(--danger){% endif %}">₹{{ "{:,.0f}".format(refund_amount) }}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Refund Rules -->
+  <div class="alert alert-info mb-3">
+    <div>
+      <strong>Refund Policy:</strong><br>
+      • More than 5 days: 100% refund<br>
+      • 2-5 days before: 50% refund<br>
+      • Less than 2 days: No refund
+    </div>
+  </div>
+
+  <!-- Confirm Cancel Form -->
+  <form method="POST" id="cancelForm">
+    <div class="form-group">
+      <label class="form-label">Reason for Cancellation (optional)</label>
+      <select class="form-control" name="reason">
+        <option value="">Select a reason...</option>
+        <option>Change of Plans</option>
+        <option>Medical Emergency</option>
+        <option>Work Conflict</option>
+        <option>Found Better Option</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div style="display:flex;gap:1rem;flex-wrap:wrap">
+      <button type="submit" name="confirm_cancel" value="1" class="btn btn-danger btn-lg" style="flex:1" id="cancelBtn"
+              onclick="return confirm('Are you absolutely sure? This cannot be undone.')">
+        ✕ Confirm Cancellation
+      </button>
+      <a href="{{ url_for('my_bookings') }}" class="btn btn-secondary btn-lg" style="flex:1">Keep My Booking</a>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

@@ -1,0 +1,159 @@
+{% extends 'layout.html' %}
+{% block title %}Receipt #{{ receipt.id }}{% endblock %}
+
+{% block content %}
+<div class="container section-sm" style="max-width:700px">
+
+  <!-- Success Banner -->
+  <div style="text-align:center;margin-bottom:2.5rem;animation:fadeInDown .7s ease">
+    <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--secondary),var(--secondary-dark));display:flex;align-items:center;justify-content:center;font-size:2.5rem;margin:0 auto 1rem;box-shadow:0 12px 32px rgba(16,185,129,.35)">✅</div>
+    <h1 style="font-size:2rem;margin-bottom:.5rem">Booking Confirmed!</h1>
+    <p class="text-muted">Payment successful. Your adventure awaits!</p>
+  </div>
+
+  <!-- Receipt Card -->
+  <div class="receipt-container" id="receiptCard">
+
+    <!-- Receipt Header -->
+    <div class="receipt-header">
+      <div style="font-size:2rem;margin-bottom:.5rem">🧭</div>
+      <h1 style="font-size:1.75rem;margin-bottom:.35rem">TMS Journey</h1>
+      <p style="color:rgba(255,255,255,.8)">Official Booking Receipt</p>
+      <div style="display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:var(--radius-full);padding:.35rem 1.25rem;font-size:.85rem;margin-top:.75rem">
+        Booking #{{ receipt.id }} · {{ receipt.transaction_id }}
+      </div>
+    </div>
+
+    <!-- Receipt Body -->
+    <div class="receipt-body">
+
+      <!-- Traveller & Destination -->
+      <div class="receipt-row">
+        <div class="receipt-field">
+          <label>👤 Traveller Name</label>
+          <span>{{ receipt.traveler_name }}</span>
+        </div>
+        <div class="receipt-field">
+          <label>📧 Email</label>
+          <span>{{ receipt.traveler_email }}</span>
+        </div>
+        <div class="receipt-field">
+          <label>📍 Destination</label>
+          <span>{{ receipt.dest_name }}</span>
+        </div>
+        <div class="receipt-field">
+          <label>👥 Passengers</label>
+          <span>{{ receipt.passengers }} person(s)</span>
+        </div>
+        <div class="receipt-field">
+          <label>📅 Travel Date</label>
+          <span>{{ receipt.start_date }}</span>
+        </div>
+        <div class="receipt-field">
+          <label>🏁 Return Date</label>
+          <span>{{ receipt.end_date }}</span>
+        </div>
+        <div class="receipt-field">
+          <label>⏳ Duration</label>
+          <span>{{ receipt.duration }} days</span>
+        </div>
+        <div class="receipt-field">
+          <label>⏱ Trip Mode</label>
+          <span>{{ receipt.trip_start_mode }}</span>
+        </div>
+        <div class="receipt-field">
+          <label>🚗 Transport</label>
+          <span>
+            {% if receipt.transport_mode=='Bus' %}🚌{% elif receipt.transport_mode=='Train' %}🚆{% elif receipt.transport_mode=='Flight' %}✈️{% else %}🚶{% endif %}
+            {{ receipt.transport_mode }}
+          </span>
+        </div>
+        <div class="receipt-field">
+          <label>🏨 Accommodation</label>
+          <span>{% if receipt.is_hotel_booked %}Booked{% else %}Self-Arranged{% endif %}</span>
+        </div>
+        <div class="receipt-field">
+          <label>🚕 Local City Travel</label>
+          <span>{% if receipt.local_transport_req %}Requested{% else %}Not Needed{% endif %}</span>
+        </div>
+        <div class="receipt-field">
+          <label>🧑‍✈️ Guide Assigned</label>
+          <span>{{ receipt.guide_name or 'Being Assigned' }}</span>
+        </div>
+        {% if receipt.guide_phone %}
+        <div class="receipt-field">
+          <label>📱 Guide Contact</label>
+          <span>{{ receipt.guide_phone }}</span>
+        </div>
+        {% endif %}
+        <div class="receipt-field">
+          <label>💳 Payment Method</label>
+          <span>UPI · {{ receipt.payment_date[:10] if receipt.payment_date else 'N/A' }}</span>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="divider"></div>
+
+      <!-- Price Breakdown -->
+      <div class="price-breakdown" style="margin-bottom:1.5rem">
+        <h3 style="margin-bottom:1rem;font-size:1rem">💰 Payment Breakdown</h3>
+        <div class="price-row">
+          <span class="label">Package Cost</span>
+          <span class="amount">₹{{ "{:,.0f}".format(receipt.package_cost) }}</span>
+        </div>
+        <div class="price-row">
+          <span class="label">Transport Cost</span>
+          <span class="amount">₹{{ "{:,.0f}".format(receipt.transport_cost) }}</span>
+        </div>
+        {% if receipt.is_hotel_booked %}
+        <div class="price-row">
+          <span class="label">Hotel Cost</span>
+          <span class="amount">₹{{ "{:,.0f}".format(receipt.hotel_cost) }}</span>
+        </div>
+        {% endif %}
+        {% if receipt.local_transport_req %}
+        <div class="price-row">
+          <span class="label">Local City Travel</span>
+          <span class="amount">₹{{ "{:,.0f}".format(receipt.local_transport_cost) }}</span>
+        </div>
+        {% endif %}
+        {% if receipt.guide_requested %}
+        <div class="price-row">
+          <span class="label">Guide Service (₹1,000 × {{ receipt.duration }} days)</span>
+          <span class="amount">₹{{ "{:,.0f}".format(receipt.guide_cost) }}</span>
+        </div>
+        {% endif %}
+        <div class="price-row total">
+          <span class="label">Total Paid</span>
+          <span class="amount">₹{{ "{:,.0f}".format(receipt.total_cost) }}</span>
+        </div>
+      </div>
+
+      <!-- Total Highlight -->
+      <div class="receipt-total">
+        ₹{{ "{:,.2f}".format(receipt.total_cost) }} Paid
+      </div>
+
+      <!-- Status -->
+      <div style="text-align:center;margin-top:1.25rem">
+        <span class="status-badge status-confirmed" style="font-size:.9rem;padding:.5rem 1.5rem">✅ CONFIRMED & PAID</span>
+      </div>
+
+    </div>
+
+    <!-- Receipt Footer -->
+    <div style="background:var(--gray-100);padding:1.25rem 2rem;border-top:1px solid var(--gray-200);font-size:.8125rem;color:var(--text-muted);text-align:center">
+      This is a computer-generated receipt. No signature required. · TMS Journey © 2026
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:2rem">
+    <button onclick="window.print()" class="btn btn-secondary">🖨 Print Receipt</button>
+    <a href="{{ url_for('itinerary', booking_id=receipt.id) }}" class="btn btn-primary">🗺 View Itinerary</a>
+    <a href="{{ url_for('my_bookings') }}" class="btn btn-secondary">📋 My Bookings</a>
+  </div>
+
+</div>
+{% endblock %}

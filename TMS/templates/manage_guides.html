@@ -1,0 +1,88 @@
+{% extends 'layout.html' %}
+{% block title %}Manage Guides{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  <aside class="sidebar">
+    <div style="padding:.5rem .75rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:.5rem">
+      <div style="font-weight:800;color:white;font-size:1rem">🛠️ Admin Panel</div>
+    </div>
+    <div class="sidebar-section">Overview</div>
+    <a href="{{ url_for('admin_dashboard') }}" class="sidebar-link"><span class="icon">📊</span><span>Dashboard</span></a>
+    <div class="sidebar-section">Management</div>
+    <a href="{{ url_for('manage_bookings') }}" class="sidebar-link"><span class="icon">📋</span><span>Bookings</span></a>
+    <a href="{{ url_for('manage_destinations') }}" class="sidebar-link"><span class="icon">🌍</span><span>Destinations</span></a>
+    <a href="{{ url_for('manage_guides') }}" class="sidebar-link active"><span class="icon">🧑‍✈️</span><span>Guides</span></a>
+    <a href="{{ url_for('manage_feedback') }}" class="sidebar-link"><span class="icon">⭐</span><span>Feedback</span></a>
+    <div class="sidebar-section">System</div>
+    <a href="{{ url_for('index') }}" class="sidebar-link"><span class="icon">🌐</span><span>View Site</span></a>
+    <a href="{{ url_for('logout') }}" class="sidebar-link" style="color:#f87171"><span class="icon">🚪</span><span>Logout</span></a>
+  </aside>
+
+  <main class="dashboard-main">
+    <div style="margin-bottom:1.75rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
+      <div>
+        <h1 style="font-size:1.5rem">🧑‍✈️ Guide Management</h1>
+        <p class="text-muted">{{ guides|length }} registered guides · Also creates their login account</p>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 360px;gap:2rem;align-items:start">
+
+      <!-- Guides List -->
+      <div class="grid grid-cols-1" style="gap:1rem">
+        {% for g in guides %}
+        <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;display:flex;align-items:center;gap:1.25rem;transition:all .3s" onmouseover="this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.boxShadow=''">
+          <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--secondary),var(--secondary-dark));display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0">🧑‍✈️</div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:1.05rem">{{ g.name }}</div>
+            <div style="font-size:.85rem;color:var(--text-muted)">📧 {{ g.email }} &nbsp;·&nbsp; 📱 {{ g.phone }}</div>
+            <div style="font-size:.85rem;color:var(--text-muted);margin-top:.1rem">📍 Lives in: <strong>{{ g.dest_name or 'Flexible / Everywhere' }}</strong></div>
+            <div style="font-size:.85rem;color:var(--primary);margin-top:.2rem">🗣 {{ g.languages }}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:.8rem;color:var(--text-muted)">Trips assigned</div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--primary)">{{ g.trip_count or 0 }}</div>
+          </div>
+        </div>
+        {% else %}
+        <div style="text-align:center;padding:3rem;color:var(--text-muted)">
+          <div style="font-size:3rem;margin-bottom:1rem">👤</div>
+          <p>No guides yet. Add your first guide!</p>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Add Guide Form -->
+      <div style="position:sticky;top:calc(var(--nav-h) + 1.5rem)">
+        <div class="glass-panel">
+          <h3 style="margin-bottom:1.5rem">➕ Add New Guide</h3>
+          <p style="font-size:.8125rem;color:var(--text-muted);margin-bottom:1.25rem">This also creates a login account with role <strong>guide</strong>. Default password: <code>guide123</code></p>
+          <form method="POST">
+            <input type="hidden" name="add_guide" value="1">
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input type="text" name="name" class="form-control" required placeholder="Ramesh Kumar">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email (used for login)</label>
+              <input type="email" name="email" class="form-control" required placeholder="guide@example.com">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone</label>
+              <input type="tel" name="phone" class="form-control" required placeholder="9988776655">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Languages Spoken</label>
+              <input type="text" name="languages" class="form-control" required placeholder="English, Hindi">
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Create Guide Account</button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+{% endblock %}

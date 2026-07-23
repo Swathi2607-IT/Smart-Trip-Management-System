@@ -1,0 +1,175 @@
+{% extends 'layout.html' %}
+{% block title %}Guide Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+
+  <!-- ── SIDEBAR ──────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-section">Guide Panel</div>
+    <a href="{{ url_for('guide_dashboard') }}" class="sidebar-link active">
+      <span class="icon">🏠</span><span>Dashboard</span>
+    </a>
+    <a href="{{ url_for('guide_trips') }}" class="sidebar-link">
+      <span class="icon">🗺</span><span>My Trips</span>
+    </a>
+
+    <div class="sidebar-section">Account</div>
+    <a href="{{ url_for('logout') }}" class="sidebar-link" style="color:#f87171">
+      <span class="icon">🚪</span><span>Logout</span>
+    </a>
+  </aside>
+
+  <!-- ── MAIN CONTENT ─────────────────────────────── -->
+  <main class="dashboard-main">
+
+    <!-- Welcome Banner -->
+    <div style="background:linear-gradient(135deg,#10b981,#059669);border-radius:var(--radius-lg);padding:2rem;color:white;margin-bottom:2rem;position:relative;overflow:hidden">
+      <div style="position:absolute;right:-30px;top:-30px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.08)"></div>
+      <h1 style="color:white;font-size:1.75rem;margin-bottom:.4rem">🧑‍✈️ Hello, {{ guide.name }}!</h1>
+      <p style="color:rgba(255,255,255,.85)">You have <strong>{{ assigned_count }}</strong> assigned trip(s). Stay ready!</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-4 mb-4">
+      <div class="stat-card">
+        <div class="stat-icon blue">📋</div>
+        <div class="stat-info">
+          <div class="num">{{ assigned_count }}</div>
+          <div class="lbl">Assigned</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">✅</div>
+        <div class="stat-info">
+          <div class="num">{{ completed_count }}</div>
+          <div class="lbl">Done</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon amber">💰</div>
+        <div class="stat-info">
+          <div class="num">₹{{ "{:,.0f}".format(total_earned) }}</div>
+          <div class="lbl">Earned</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon gray">⏳</div>
+        <div class="stat-info">
+          <div class="num">₹{{ "{:,.0f}".format(pending_earned) }}</div>
+          <div class="lbl">Pending</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Guide Info Card -->
+    <div class="glass-panel mb-4" style="display:flex;align-items:center;gap:2rem;flex-wrap:wrap">
+      <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--secondary),var(--secondary-dark));display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0">🧑‍✈️</div>
+      <div style="flex:1">
+        <h2 style="margin-bottom:.35rem">{{ guide.name }}</h2>
+        <p style="color:var(--text-muted);margin-bottom:.25rem">📧 {{ guide.email }}</p>
+        <p style="color:var(--text-muted);margin-bottom:.25rem">📱 {{ guide.phone }}</p>
+        <p style="color:var(--text-muted)">🗣 Languages: <strong>{{ guide.languages }}</strong></p>
+      </div>
+    </div>
+
+    <!-- Assigned Trips -->
+    <div class="table-wrap">
+      <div style="padding:1.25rem 1.5rem;border-bottom:1px solid var(--gray-200)">
+        <h2 style="font-size:1.1rem">🗺 Assigned Trips</h2>
+      </div>
+      {% if trips %}
+      <table class="data-table">
+        <thead>
+          <tr><th>Traveller</th><th>Destination</th><th>Travel Date</th><th>Duration</th><th>Passengers</th><th>Transport</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          {% for trip in trips %}
+          <tr>
+            <td>
+              <div style="font-weight:600">{{ trip.user_name }}</div>
+              <div style="font-size:.825rem;color:var(--text-muted)">📧 {{ trip.user_email }}</div>
+              <div style="font-size:.825rem;color:var(--primary);font-weight:700">📱 {{ trip.user_phone }}</div>
+            </td>
+            <td><strong>{{ trip.dest_name }}</strong></td>
+            <td>{{ trip.start_date }}</td>
+            <td>{{ trip.duration }} days</td>
+            <td>{{ trip.passengers }}</td>
+            <td>{{ trip.transport_mode }}</td>
+            <td><span class="status-badge status-{{ trip.status | lower }}">{{ trip.status }}</span></td>
+            <td>
+              <a href="{{ url_for('itinerary', booking_id=trip.id) }}" class="btn btn-sm btn-primary">🗺 Itinerary</a>
+              
+              {% if trip.guide_status == 'Pending' %}
+              <div style="margin-top:.5rem;display:flex;gap:.25rem">
+                <form method="POST" action="{{ url_for('guide_respond_trip', booking_id=trip.id, action='accept') }}">
+                  <button type="submit" class="btn btn-sm btn-success">✅ Accept</button>
+                </form>
+                <form method="POST" action="{{ url_for('guide_respond_trip', booking_id=trip.id, action='reject') }}">
+                  <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Reject this trip? It will be auto-assigned to someone else.')">❌ Reject</button>
+                </form>
+              </div>
+              {% elif trip.guide_status == 'Accepted' and trip.status == 'Confirmed' %}
+              <form method="POST" action="{{ url_for('guide_update_status') }}" style="display:inline;margin-top:.25rem">
+                <input type="hidden" name="booking_id" value="{{ trip.id }}">
+                <input type="hidden" name="new_status" value="Completed">
+                <button type="submit" class="btn btn-sm btn-success">✅ Mark Done</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div style="text-align:center;padding:3rem;color:var(--text-muted)">
+        <div style="font-size:3rem;margin-bottom:1rem">📭</div>
+        <p>No trips assigned yet. Check back soon!</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- My Stays & Commissions -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:2rem">
+      
+      <!-- Stays -->
+      <div class="glass-panel">
+        <h3 style="margin-bottom:1.25rem">🏨 My Accommodations</h3>
+        {% if stays %}
+          {% for stay in stays %}
+          <div style="padding:1rem;background:var(--gray-50);border-radius:var(--radius-md);margin-bottom:1rem;border-left:4px solid var(--primary)">
+            <div style="font-weight:700;margin-bottom:.25rem">{{ stay.hotel_name }}</div>
+            <div style="font-size:.85rem;color:var(--text-muted)">📍 {{ stay.dest_name }}</div>
+            <div style="margin-top:.5rem;font-size:.85rem">📅 {{ stay.check_in }} to {{ stay.check_out }}</div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p style="color:var(--text-muted);font-size:.9rem">No stay records found.</p>
+        {% endif %}
+      </div>
+
+      <!-- Commissions -->
+      <div class="glass-panel">
+        <h3 style="margin-bottom:1.25rem">💰 My Commissions</h3>
+        {% if commissions %}
+          {% for comm in commissions %}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:1rem;border-bottom:1px solid var(--gray-100)">
+            <div>
+              <div style="font-weight:600">Booking #{{ comm.booking_id }}</div>
+              <div style="font-size:.8rem;color:var(--text-muted)">{{ comm.dest_name }} · {{ comm.start_date }}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-weight:800;color:var(--success)">₹{{ "{:,.0f}".format(comm.amount) }}</div>
+              <span class="status-badge status-{{ comm.status | lower }}" style="font-size:0.7rem">{{ comm.status }}</span>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p style="color:var(--text-muted);font-size:.9rem">No commission records found.</p>
+        {% endif %}
+      </div>
+    </div>
+
+  </main>
+</div>
+{% endblock %}

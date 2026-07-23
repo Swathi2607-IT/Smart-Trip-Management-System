@@ -1,0 +1,140 @@
+{% extends 'layout.html' %}
+{% block title %}My Bookings{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <h1>📋 My Bookings</h1>
+    <p>Track and manage all your trip reservations</p>
+  </div>
+</div>
+
+<div class="container section-sm">
+
+  <!-- Filter Tabs -->
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:2rem" id="filterTabs">
+    <button class="btn btn-primary btn-sm filter-tab" data-filter="all" onclick="filterTab(this,'all')">All</button>
+    <button class="btn btn-secondary btn-sm filter-tab" data-filter="pending"   onclick="filterTab(this,'pending')">⏳ Pending</button>
+    <button class="btn btn-secondary btn-sm filter-tab" data-filter="confirmed" onclick="filterTab(this,'confirmed')">✅ Confirmed</button>
+    <button class="btn btn-secondary btn-sm filter-tab" data-filter="cancelled" onclick="filterTab(this,'cancelled')">❌ Cancelled</button>
+    <button class="btn btn-secondary btn-sm filter-tab" data-filter="completed" onclick="filterTab(this,'completed')">🏁 Completed</button>
+  </div>
+
+  {% if bookings %}
+  <div style="display:flex;flex-direction:column;gap:1.25rem" id="bookingList">
+    {% for b in bookings %}
+    <div class="booking-row" data-status="{{ b.status | lower }}" style="background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);overflow:hidden;transition:all .3s;box-shadow:var(--shadow-sm)">
+      <div style="display:grid;grid-template-columns:100px 1fr auto;gap:0;min-height:120px">
+
+        <!-- Destination Image -->
+        <div style="overflow:hidden">
+          <img src="{{ b.image_url }}" alt="{{ b.dest_name }}" style="width:100%;height:100%;object-fit:cover">
+        </div>
+
+        <!-- Details -->
+        <div style="padding:1.25rem 1.5rem">
+          <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem;flex-wrap:wrap">
+            <h3 style="font-size:1.1rem">{{ b.dest_name }}</h3>
+            <span class="status-badge status-{{ b.status | lower }}">
+              {% if b.status == 'Pending' %}⏳{% elif b.status == 'Confirmed' %}✅{% elif b.status == 'Cancelled' %}❌{% else %}🏁{% endif %}
+              {{ b.status }}
+            </span>
+          </div>
+          <div style="font-size:.875rem;color:var(--text-muted);display:flex;flex-wrap:wrap;gap:1rem">
+            <span>📅 {{ b.start_date }}</span>
+            <span>⏳ {{ b.duration }} days</span>
+            <span>👥 {{ b.passengers }} pax</span>
+            <span>🚗 {{ b.transport_mode }}</span>
+          </div>
+          {% if b.guide_name %}
+          <div style="margin-top:.75rem;padding:.5rem 1rem;background:rgba(99,102,241,0.05);border-radius:var(--radius-full);width:fit-content;display:flex;align-items:center;gap:.5rem;border:1px solid rgba(99,102,241,0.2)">
+            <span style="font-size:1.1rem">🧑‍✈️</span>
+            <div style="font-size:.8rem;font-weight:700">{{ b.guide_name }} <a href="tel:{{ b.guide_phone }}" style="color:var(--primary);margin-left:.25rem;font-weight:600">📱 {{ b.guide_phone }}</a></div>
+          </div>
+          {% elif b.guide_requested %}
+          <div style="margin-top:.75rem;padding:.5rem 1rem;background:var(--gray-100);border-radius:var(--radius-full);width:fit-content;display:flex;align-items:center;gap:.5rem">
+            <span style="font-size:1.1rem">⏳</span>
+            <div style="font-size:.8rem;color:var(--text-muted)">Guide Request Pending</div>
+          </div>
+          {% endif %}
+          {% if b.status == 'Cancelled' and b.refund_amount %}
+          <div style="margin-top:.5rem;font-size:.8rem;color:var(--secondary);font-weight:600">
+            💚 Refund: ₹{{ "{:,.0f}".format(b.refund_amount) }} processed
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Price + Actions -->
+        <div style="padding:1.25rem;text-align:right;border-left:1px solid var(--gray-100);display:flex;flex-direction:column;justify-content:space-between;min-width:160px">
+          <div style="font-size:1.4rem;font-weight:800;color:var(--primary)">₹{{ "{:,.0f}".format(b.total_cost) }}</div>
+          <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.75rem">
+            {% if b.status == 'Confirmed' %}
+              {% if b.receipt_token %}
+              <a href="{{ url_for('receipt', token=b.receipt_token) }}" class="btn btn-sm btn-secondary">🧾 Receipt</a>
+              {% endif %}
+              <a href="{{ url_for('itinerary', booking_id=b.id) }}" class="btn btn-sm btn-primary">🗺 Itinerary</a>
+              {% if b.can_cancel %}
+              <a href="{{ url_for('cancel_booking', id=b.id) }}" class="btn btn-sm btn-danger">✕ Cancel</a>
+              {% endif %}
+              {% if b.has_started %}
+              <a href="{{ url_for('feedback', booking_id=b.id) }}" class="btn btn-sm btn-outline">⭐ Review Trip</a>
+              {% endif %}
+            {% elif b.status == 'Pending' %}
+              <form method="POST" action="{{ url_for('payment') }}">
+                <input type="hidden" name="booking_id" value="{{ b.id }}">
+                <button type="submit" class="btn btn-sm btn-success btn-full">💳 Pay Now</button>
+              </form>
+              <form method="POST" action="{{ url_for('cancel_pending') }}">
+                <input type="hidden" name="booking_id" value="{{ b.id }}">
+                <button type="submit" class="btn btn-sm btn-danger btn-full" onclick="return confirm('Cancel this booking?')">✕ Discard</button>
+              </form>
+            {% elif b.status == 'Completed' %}
+              <a href="{{ url_for('feedback', booking_id=b.id) }}" class="btn btn-sm btn-primary">⭐ Review</a>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div id="noBookingsMsg" style="display:none;text-align:center;padding:3rem;color:var(--text-muted)">
+    <div style="font-size:3rem;margin-bottom:1rem">📭</div>
+    <p>No bookings in this category.</p>
+  </div>
+
+  {% else %}
+  <div style="text-align:center;padding:4rem;color:var(--text-muted)">
+    <div style="font-size:4rem;margin-bottom:1rem">✈️</div>
+    <h2 style="margin-bottom:.75rem">No Trips Yet!</h2>
+    <p style="margin-bottom:1.5rem">Start your adventure by exploring our packages.</p>
+    <a href="{{ url_for('destinations') }}" class="btn btn-primary btn-lg">🌍 Browse Destinations</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterTab(btn, filter) {
+  document.querySelectorAll('.filter-tab').forEach(b => {
+    b.className = 'btn btn-secondary btn-sm filter-tab';
+  });
+  btn.className = 'btn btn-primary btn-sm filter-tab';
+
+  const rows = document.querySelectorAll('.booking-row');
+  let shown = 0;
+  rows.forEach(row => {
+    if (filter === 'all' || row.dataset.status === filter) {
+      row.style.display = '';
+      shown++;
+    } else {
+      row.style.display = 'none';
+    }
+  });
+  document.getElementById('noBookingsMsg').style.display = shown === 0 ? 'block' : 'none';
+}
+</script>
+{% endblock %}

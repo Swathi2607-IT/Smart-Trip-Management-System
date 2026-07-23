@@ -1,0 +1,370 @@
+{% extends 'layout.html' %}
+{% block title %}Book {{ dest.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <h1>📅 Book Your Trip</h1>
+    <p>Customise your journey to <strong>{{ dest.name }}</strong></p>
+  </div>
+</div>
+
+<div class="container section-sm">
+  <div style="display:grid;grid-template-columns:3fr 2fr;gap:2.5rem;align-items:start">
+
+    <!-- Booking Form -->
+    <div class="glass-panel">
+      <form method="POST" action="{{ url_for('checkout') }}" id="bookForm">
+        <input type="hidden" name="dest_id" value="{{ dest.id }}">
+
+        <!-- Destination info header -->
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--gray-200)">
+          <img src="{{ dest.image_url }}" alt="{{ dest.name }}" style="width:72px;height:72px;object-fit:cover;border-radius:var(--radius-md);flex-shrink:0">
+          <div>
+            <div style="font-weight:800;font-size:1.25rem">{{ dest.name }}</div>
+            <div style="color:var(--text-muted);font-size:.9rem">Base: ₹{{ "{:,.0f}".format(dest.base_price) }} / day / person</div>
+            <div>
+              <span class="badge {% if dest.weather_status == 'Rainy' %}badge-rainy{% elif dest.weather_status == 'Cloudy' %}badge-cloudy{% elif dest.weather_status == 'Stormy' %}badge-stormy{% elif dest.weather_status == 'Snowy' %}badge-snowy{% elif dest.weather_status == 'Clear' %}badge-clear{% else %}badge-sunny{% endif %}">
+                {{ dest.weather_icon }} {{ dest.weather_status }} · {{ dest.weather_temp }}°C
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Travel Details -->
+        <h3 style="margin-bottom:1.25rem">🗓 Travel Details</h3>
+        <div class="grid grid-cols-2" style="gap:1rem">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">City of Departure</label>
+            <div class="input-group">
+              <span class="input-icon">📍</span>
+              <input type="text" name="departure_city" id="departureCity" class="form-control" placeholder="e.g. Mumbai, Delhi" required>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Start Date</label>
+            <input type="date" name="start_date" id="startDate" class="form-control" required min="{{ today_date }}" onchange="calcCost()">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 mt-2" style="gap:1rem">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Duration (days)</label>
+            <div class="input-group">
+              <span class="input-icon">📆</span>
+              <input type="number" name="duration" id="duration" class="form-control" required min="1" max="30" value="3" onchange="calcCost()">
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Number of Passengers</label>
+            <div class="input-group">
+              <span class="input-icon">👥</span>
+              <input type="number" name="passengers" id="passengers" class="form-control" required min="1" max="20" value="1" onchange="calcCost()">
+            </div>
+          </div>
+        </div>
+
+        <!-- Trip Start Mode -->
+        <div class="form-group">
+          <label class="form-label">⏱ Trip Duration Mode</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <label style="border:2px solid var(--gray-200);border-radius:var(--radius-md);padding:1rem;cursor:pointer;transition:all .3s" id="mode1Label">
+              <input type="radio" name="trip_start_mode" value="From Departure" checked onchange="handleMode(this)" style="display:none">
+              <div style="font-weight:700;margin-bottom:.25rem">🚀 From Departure</div>
+              <div style="font-size:.8rem;color:var(--text-muted)">Duration includes travel time</div>
+            </label>
+            <label style="border:2px solid var(--gray-200);border-radius:var(--radius-md);padding:1rem;cursor:pointer;transition:all .3s" id="mode2Label">
+              <input type="radio" name="trip_start_mode" value="After Arrival" onchange="handleMode(this)" style="display:none">
+              <div style="font-weight:700;margin-bottom:.25rem">🏨 After Arrival</div>
+              <div style="font-size:.8rem;color:var(--text-muted)">Duration starts on reaching destination</div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Transport Selection -->
+        <div id="transportSection">
+          <h3 style="margin-bottom:1.25rem">🚗 Select Transport</h3>
+          <div class="transport-options" id="transportOpts">
+            {% for t in transports %}
+            <label class="transport-option" id="topt_{{ loop.index }}" onclick="selectTransport(this)">
+              <input type="radio" name="transport_id" value="{{ t.id }}" data-cost="{{ t.average_cost }}" data-mode="{{ t.mode }}" {% if loop.first %}checked{% endif %} style="display:none">
+              <span class="transport-icon">{% if t.mode=='Bus' %}🚌{% elif t.mode=='Train' %}🚆{% else %}✈️{% endif %}</span>
+              <div class="transport-name">{{ t.mode }}</div>
+              <div class="transport-price">₹{{ "{:,.0f}".format(t.average_cost) }}/person</div>
+              <div class="transport-desc">{{ t.description[:45] }}</div>
+              <div class="transport-rec-badge" id="rec_badge_{{ loop.index }}" style="display:none;margin-top:.5rem;font-size:0.7rem;background:var(--primary-light);color:white;padding:0.2rem 0.5rem;border-radius:var(--radius-sm);width:fit-content">⭐ Recommended</div>
+            </label>
+            {% endfor %}
+            <label class="transport-option" id="topt_none" onclick="selectTransport(this)">
+              <input type="radio" name="transport_id" value="0" data-cost="0" data-mode="Self-Arranged" style="display:none">
+              <span class="transport-icon">🚶</span>
+              <div class="transport-name">Self-Arranged</div>
+              <div class="transport-price">₹0</div>
+              <div class="transport-desc">I'll arrange my own transport</div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Local Transport Inquiry (Sticky for self-arranged) -->
+        <div id="localTransportBox" class="glass-panel mb-4" style="display:none;background:var(--secondary-light);border-color:var(--secondary)">
+          <label style="display:flex;align-items:center;gap:1rem;cursor:pointer">
+            <input type="checkbox" name="local_transport_req" id="localTransportReq" style="width:20px;height:20px" onchange="calcCost()">
+            <div>
+              <div style="font-weight:700">🚗 Need Local Transport (Car/Bus)?</div>
+              <div style="font-size:.8rem;color:var(--text-muted)">Add city tour transport for ₹1,500/day</div>
+            </div>
+          </label>
+        </div>
+
+        <!-- Hotel Selection -->
+        <div class="mb-4">
+          <h3 style="margin-bottom:1.25rem">🏨 Select Hotel (Optional)</h3>
+          <div style="display:grid;gap:1rem">
+            <label class="glass-panel" style="display:flex;align-items:center;gap:1.5rem;cursor:pointer;border:2px solid var(--gray-200)" id="hotel_none_label">
+              <input type="radio" name="hotel_id" value="0" data-price="0" checked onchange="selectHotel(this)" style="display:none">
+              <div style="width:50px;height:50px;background:var(--gray-200);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem">🚫</div>
+              <div>
+                <div style="font-weight:700">No Hotel Needed</div>
+                <div style="font-size:.8rem;color:var(--text-muted)">I'll arrange my own stay</div>
+              </div>
+            </label>
+            {% for h in hotels %}
+            <label class="glass-panel" style="display:flex;align-items:center;gap:1.5rem;cursor:pointer;border:2px solid var(--gray-200)" id="hotel_{{ h.id }}_label">
+              <input type="radio" name="hotel_id" value="{{ h.id }}" data-price="{{ h.price_per_night }}" onchange="selectHotel(this)" style="display:none">
+              <img src="{{ h.image_url or 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200&q=80' }}" alt="" style="width:50px;height:50px;border-radius:50%;object-fit:cover">
+              <div style="flex:1">
+                <div style="font-weight:700">{{ h.name }}</div>
+                <div style="font-size:.8rem;color:var(--text-muted)">₹{{ h.price_per_night }} per night</div>
+              </div>
+              <div style="font-weight:800;color:var(--primary)">₹{{ h.price_per_night }}</div>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Guide Selection -->
+        <div class="mb-4">
+          <h3 style="margin-bottom:1.25rem">🧑‍✈️ Guide Service (Local Expert)</h3>
+          <div style="display:grid;gap:1rem">
+            <label class="glass-panel" style="display:flex;align-items:center;gap:1.5rem;cursor:pointer;border:2px solid var(--primary)" id="guide_none_label">
+              <input type="radio" name="guide_id" value="" data-price="0" checked onchange="selectGuide(this)" style="display:none">
+              <div style="width:50px;height:50px;background:var(--gray-200);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem">🚫</div>
+              <div style="flex:1">
+                <div style="font-weight:700">No Guide Needed</div>
+                <div style="font-size:.8rem;color:var(--text-muted)">I'll explore on my own</div>
+              </div>
+            </label>
+            
+            <label class="glass-panel" style="display:flex;align-items:center;gap:1.5rem;cursor:pointer;border:2px solid var(--gray-200)" id="guide_auto_label">
+              <input type="radio" name="guide_id" value="auto" data-price="1000" onchange="selectGuide(this)" style="display:none">
+              <div style="width:50px;height:50px;background:var(--primary-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--primary)">🤖</div>
+              <div style="flex:1">
+                <div style="font-weight:700">Auto Assign (Recommended)</div>
+                <div style="font-size:.8rem;color:var(--text-muted)">We will pick the best available top-rated guide for you</div>
+              </div>
+              <div style="font-weight:800;color:var(--success)">Est. ₹1,000 / day</div>
+            </label>
+
+            {% for g in guides %}
+            <label class="glass-panel" style="display:flex;align-items:center;gap:1.5rem;cursor:pointer;border:2px solid var(--gray-200)" id="guide_{{ g.id }}_label">
+              <input type="radio" name="guide_id" value="{{ g.id }}" data-price="{{ g.price }}" onchange="selectGuide(this)" style="display:none">
+              <div style="width:50px;height:50px;background:var(--gray-100);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem">👤</div>
+              <div style="flex:1">
+                <div style="font-weight:700">{{ g.name }} <span style="color:#f59e0b;font-size:.9rem">⭐ {{ g.rating }}</span></div>
+                <div style="font-size:.8rem;color:var(--text-muted)">Speaks: {{ g.languages }}</div>
+              </div>
+              <div style="font-weight:800;color:var(--success)">₹{{ "{:,.0f}".format(g.price) }} / day</div>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:2rem" id="proceedBtn">
+          Continue to Review →
+        </button>
+      </form>
+    </div>
+
+    <!-- Live Price Summary (Sticky) -->
+    <div style="position:sticky;top:calc(var(--nav-h) + 1.5rem)">
+      <div class="price-breakdown mb-3">
+        <h3 style="margin-bottom:1.25rem">💰 Price Summary</h3>
+        <div class="price-row">
+          <span class="label">Package Price</span>
+          <span class="amount" id="pkgAmt">₹0</span>
+        </div>
+        <div class="price-row">
+          <span class="label">Transport Cost</span>
+          <span class="amount" id="transAmt">₹0</span>
+        </div>
+        <div class="price-row" id="hotelRow" style="display:none">
+          <span class="label">Hotel Cost</span>
+          <span class="amount" id="hotelAmt">₹0</span>
+        </div>
+        <div class="price-row" id="localTransRow" style="display:none">
+          <span class="label">Local Transport</span>
+          <span class="amount" id="localTransAmt">₹0</span>
+        </div>
+        <div class="price-row" id="guideRow" style="display:none">
+          <span class="label">Guide Service</span>
+          <span class="amount" id="guideAmt">₹0</span>
+        </div>
+        <div class="price-row total">
+          <span class="label">Total Estimate</span>
+          <span class="amount" id="totalAmt" style="color:var(--primary)">₹0</span>
+        </div>
+      </div>
+
+      <div class="glass-panel" style="font-size:.875rem;color:var(--text-muted);line-height:1.6">
+        <div style="font-weight:700;color:var(--text-main);margin-bottom:.75rem">📌 Booking Info</div>
+        <p>• Prices are per person × number of days × passengers</p>
+        <p style="margin-top:.4rem">• Full refund if cancelled 5+ days before travel</p>
+        <p style="margin-top:.4rem">• 50% refund for 2–5 days before travel</p>
+        <p style="margin-top:.4rem">• No refund within 2 days of travel</p>
+      </div>
+    </div>
+
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const basePrice = {{ dest.base_price }};
+let transportCost = {{ transports[0].average_cost if transports else 0 }};
+let hotelPrice = 0;
+const localTransportDailyCost = 1500;
+let guideDailyCost = 0;
+
+// Highlight first items
+document.querySelector('.transport-option')?.classList.add('selected');
+document.getElementById('hotel_none_label').style.borderColor = 'var(--primary)';
+
+function calcCost() {
+  const days = parseInt(document.getElementById('duration').value) || 1;
+  const pax  = parseInt(document.getElementById('passengers').value) || 1;
+  
+  const pkg  = days * basePrice * pax;
+  const trans = transportCost * pax;
+  const hotel = hotelPrice * (days - 1 > 0 ? days - 1 : 1) * Math.ceil(pax/2); // Rooms = pax/2 approx
+  
+  let localTrans = 0;
+  if(document.getElementById('localTransportReq').checked) {
+    localTrans = localTransportDailyCost * days;
+    document.getElementById('localTransRow').style.display = 'flex';
+    document.getElementById('localTransAmt').textContent = '₹' + localTrans.toLocaleString('en-IN');
+  } else {
+    document.getElementById('localTransRow').style.display = 'none';
+  }
+
+  if (hotel > 0) {
+    document.getElementById('hotelRow').style.display = 'flex';
+    document.getElementById('hotelAmt').textContent = '₹' + hotel.toLocaleString('en-IN');
+  } else {
+    document.getElementById('hotelRow').style.display = 'none';
+  }
+
+  let guideCost = guideDailyCost * days;
+  if(guideCost > 0) {
+    document.getElementById('guideRow').style.display = 'flex';
+    document.getElementById('guideAmt').textContent = '₹' + guideCost.toLocaleString('en-IN');
+  } else {
+    document.getElementById('guideRow').style.display = 'none';
+  }
+
+  const total = pkg + trans + hotel + localTrans + guideCost;
+
+  document.getElementById('pkgAmt').textContent  = '₹' + pkg.toLocaleString('en-IN');
+  document.getElementById('transAmt').textContent = '₹' + trans.toLocaleString('en-IN');
+  document.getElementById('totalAmt').textContent = '₹' + total.toLocaleString('en-IN');
+  document.getElementById('proceedBtn').innerHTML = `Continue to Review (₹${total.toLocaleString('en-IN')}) →`;
+  
+  // Smart Transport Suggestion Logic
+  document.querySelectorAll('.transport-rec-badge').forEach(b => b.style.display = 'none');
+  const transports = document.querySelectorAll('.transport-option input[type="radio"]');
+  transports.forEach((radio, idx) => {
+    const mode = radio.getAttribute('data-mode');
+    const badge = document.getElementById(`rec_badge_${idx + 1}`);
+    if (badge) {
+      if (days < 5 && (mode === 'Bus' || mode === 'Train')) {
+        badge.style.display = 'inline-block';
+        badge.textContent = '⭐ Short Trip Pick';
+      } else if (days >= 5 && mode === 'Flight') {
+        badge.style.display = 'inline-block';
+        badge.textContent = '⭐ Best for Long Trip';
+      }
+    }
+  });
+}
+
+function selectTransport(el) {
+  const radio = el.querySelector('input');
+  radio.checked = true;
+  transportCost = parseFloat(radio.dataset.cost) || 0;
+  
+  document.querySelectorAll('.transport-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+
+  // Show/Hide local transport inquiry if self-arranged
+  if (radio.dataset.mode === 'Self-Arranged') {
+    document.getElementById('localTransportBox').style.display = 'block';
+  } else {
+    document.getElementById('localTransportBox').style.display = 'none';
+    document.getElementById('localTransportReq').checked = false;
+  }
+  
+  calcCost();
+}
+
+function selectHotel(radio) {
+  hotelPrice = parseFloat(radio.dataset.price) || 0;
+  document.querySelectorAll('[id^="hotel_"]').forEach(l => {
+    if(l.id.endsWith('_label')) l.style.borderColor = 'var(--gray-200)';
+  });
+  radio.closest('label').style.borderColor = 'var(--primary)';
+  calcCost();
+}
+
+function selectGuide(radio) {
+  guideDailyCost = parseFloat(radio.dataset.price) || 0;
+  document.querySelectorAll('[id^="guide_"]').forEach(l => {
+    if(l.id.endsWith('_label')) l.style.borderColor = 'var(--gray-200)';
+  });
+  radio.closest('label').style.borderColor = 'var(--primary)';
+  calcCost();
+}
+
+function handleMode(radio) {
+  const val = radio.value;
+  const tSec = document.getElementById('transportSection');
+  document.getElementById('mode1Label').style.borderColor = val === 'From Departure' ? 'var(--primary)' : 'var(--gray-200)';
+  document.getElementById('mode2Label').style.borderColor = val === 'After Arrival'  ? 'var(--primary)' : 'var(--gray-200)';
+
+  if (val === 'After Arrival') {
+    tSec.style.opacity = '.4';
+    tSec.style.pointerEvents = 'none';
+    transportCost = 0;
+    document.getElementById('localTransportBox').style.display = 'block';
+  } else {
+    tSec.style.opacity = '1';
+    tSec.style.pointerEvents = '';
+    const activeTrans = document.querySelector('input[name="transport_id"]:checked');
+    transportCost = parseFloat(activeTrans.dataset.cost) || 0;
+    if(activeTrans.dataset.mode !== 'Self-Arranged') {
+       document.getElementById('localTransportBox').style.display = 'none';
+    }
+  }
+  calcCost();
+}
+
+// Init
+calcCost();
+
+document.getElementById('bookForm').addEventListener('submit', function() {
+  document.getElementById('proceedBtn').textContent = 'Processing...';
+  document.getElementById('proceedBtn').disabled = true;
+});
+</script>
+{% endblock %}

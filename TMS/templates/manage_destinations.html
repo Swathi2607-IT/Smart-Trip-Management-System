@@ -1,0 +1,124 @@
+{% extends 'layout.html' %}
+{% block title %}Manage Destinations{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+  <aside class="sidebar">
+    <div style="padding:.5rem .75rem 1.5rem;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:.5rem">
+      <div style="font-weight:800;color:white;font-size:1rem">🛠️ Admin Panel</div>
+    </div>
+    <div class="sidebar-section">Overview</div>
+    <a href="{{ url_for('admin_dashboard') }}" class="sidebar-link"><span class="icon">📊</span><span>Dashboard</span></a>
+    <div class="sidebar-section">Management</div>
+    <a href="{{ url_for('manage_bookings') }}" class="sidebar-link"><span class="icon">📋</span><span>Bookings</span></a>
+    <a href="{{ url_for('manage_destinations') }}" class="sidebar-link active"><span class="icon">🌍</span><span>Destinations</span></a>
+    <a href="{{ url_for('manage_guides') }}" class="sidebar-link"><span class="icon">🧑‍✈️</span><span>Guides</span></a>
+    <a href="{{ url_for('manage_feedback') }}" class="sidebar-link"><span class="icon">⭐</span><span>Feedback</span></a>
+    <div class="sidebar-section">System</div>
+    <a href="{{ url_for('index') }}" class="sidebar-link"><span class="icon">🌐</span><span>View Site</span></a>
+    <a href="{{ url_for('logout') }}" class="sidebar-link" style="color:#f87171"><span class="icon">🚪</span><span>Logout</span></a>
+  </aside>
+
+  <main class="dashboard-main">
+    <div style="margin-bottom:1.75rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
+      <div>
+        <h1 style="font-size:1.5rem">🌍 Manage Destinations</h1>
+        <p class="text-muted">Update weather, pricing, and destination info</p>
+      </div>
+      <button class="btn btn-primary" onclick="document.getElementById('addDestModal').style.display='flex'">
+        + Add Destination
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1" style="gap:1rem">
+      {% for dest in destinations %}
+      <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);overflow:hidden;display:grid;grid-template-columns:120px 1fr auto;transition:all .3s" onmouseover="this.style.boxShadow='var(--shadow-lg)';this.style.borderColor='var(--primary-light)'" onmouseout="this.style.boxShadow='';this.style.borderColor='var(--gray-200)'">
+        <img src="{{ dest.image_url }}" alt="{{ dest.name }}" style="width:120px;height:100%;object-fit:cover">
+        <div style="padding:1.25rem 1.5rem">
+          <h3 style="font-size:1.1rem;margin-bottom:.35rem">{{ dest.name }}</h3>
+          <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:.75rem">{{ dest.description[:100] }}...</p>
+          <div style="display:flex;gap:1.25rem;font-size:.875rem;flex-wrap:wrap">
+            <span>💰 ₹{{ "{:,.0f}".format(dest.base_price) }}/day</span>
+            <span>
+              {{ dest.weather_icon }}
+              {{ dest.weather_temp }}°C · {{ dest.weather_status }}
+            </span>
+          </div>
+        </div>
+        <div style="padding:1.25rem;border-left:1px solid var(--gray-100);display:flex;flex-direction:column;gap:.75rem;justify-content:center;min-width:200px">
+          <button class="btn btn-secondary btn-sm" onclick="openEdit({{ dest.id }}, {{ dest.base_price }})">
+            ✏️ Edit
+          </button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </main>
+</div>
+
+<!-- ── EDIT MODAL ──────────────────────────────── -->
+<div id="editModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+  <div class="glass-panel" style="width:100%;max-width:440px;margin:1rem">
+    <h3 style="margin-bottom:1.5rem">✏️ Edit Destination</h3>
+    <form method="POST">
+      <input type="hidden" name="update_dest" value="1">
+      <input type="hidden" name="id" id="editId">
+      <div class="form-group">
+        <label class="form-label">Base Price (₹/day)</label>
+        <input type="number" name="base_price" id="editPrice" class="form-control" step="100" required>
+      </div>
+      <div style="display:flex;gap:.75rem;margin-top:1.5rem">
+        <button type="submit" class="btn btn-primary" style="flex:1">Save Changes</button>
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('editModal').style.display='none'">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── ADD DESTINATION MODAL ──────────────────── -->
+<div id="addDestModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+  <div class="glass-panel" style="width:100%;max-width:480px;margin:1rem">
+    <h3 style="margin-bottom:1.5rem">➕ Add New Destination</h3>
+    <form method="POST">
+      <input type="hidden" name="add_dest" value="1">
+      <div class="form-group">
+        <label class="form-label">Destination Name</label>
+        <input type="text" name="dest_name" class="form-control" required placeholder="e.g. Goa">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea name="dest_desc" class="form-control" rows="3" required placeholder="Describe this destination..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Image URL</label>
+        <input type="url" name="dest_image" class="form-control" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Base Price (₹/day)</label>
+        <input type="number" name="base_price" class="form-control" required step="100" placeholder="5000">
+      </div>
+      <div style="display:flex;gap:.75rem;margin-top:1rem">
+        <button type="submit" class="btn btn-primary" style="flex:1">Add Destination</button>
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('addDestModal').style.display='none'">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openEdit(id, price) {
+  document.getElementById('editId').value = id;
+  document.getElementById('editPrice').value = price;
+  document.getElementById('editModal').style.display = 'flex';
+}
+// Close modals on backdrop click
+['editModal','addDestModal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if (e.target === this) this.style.display = 'none';
+  });
+});
+</script>
+{% endblock %}

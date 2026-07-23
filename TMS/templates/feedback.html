@@ -1,0 +1,66 @@
+{% extends 'layout.html' %}
+{% block title %}Leave a Review{% endblock %}
+
+{% block content %}
+<div class="container section-sm" style="max-width:600px">
+  <div class="glass-panel">
+    <div style="text-align:center;margin-bottom:2rem">
+      <div style="font-size:3rem;margin-bottom:.75rem">⭐</div>
+      <h1 style="font-size:1.75rem">Share Your Experience</h1>
+      <p class="text-muted">How was your trip to <strong>{{ dest_name }}</strong>?</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('feedback', booking_id=booking_id) }}">
+      <!-- Star Rating -->
+      <div class="form-group" style="text-align:center">
+        <label class="form-label" style="display:block;margin-bottom:1rem">Your Rating</label>
+        <div id="starRow" style="display:flex;justify-content:center;gap:.5rem;margin-bottom:.5rem">
+          {% for i in range(1, 6) %}
+          <label style="cursor:pointer">
+            <input type="radio" name="rating" value="{{ i }}" style="display:none" required>
+            <span class="star" data-val="{{ i }}" style="font-size:2.5rem;transition:transform .2s;display:block;user-select:none">☆</span>
+          </label>
+          {% endfor %}
+        </div>
+        <div id="ratingLabel" style="font-size:.875rem;color:var(--text-muted)">Click a star to rate</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Your Review</label>
+        <textarea name="comment" class="form-control" rows="5" placeholder="Tell us about your experience — the highlights, the guide, the places..." required></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full btn-lg">Submit Review →</button>
+      <a href="{{ url_for('my_bookings') }}" class="btn btn-secondary btn-full" style="margin-top:.75rem">Skip for now</a>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const labels = ['','😞 Poor','😐 Fair','🙂 Good','😊 Great','🤩 Excellent!'];
+const stars = document.querySelectorAll('.star');
+let selectedRating = 0;
+
+stars.forEach(star => {
+  star.addEventListener('mouseenter', () => highlight(+star.dataset.val));
+  star.addEventListener('mouseleave', () => highlight(selectedRating));
+  star.addEventListener('click', () => {
+    selectedRating = +star.dataset.val;
+    star.closest('label').querySelector('input').checked = true;
+    document.getElementById('ratingLabel').textContent = labels[selectedRating];
+    document.getElementById('ratingLabel').style.color = 'var(--accent)';
+    document.getElementById('ratingLabel').style.fontWeight = '700';
+  });
+});
+
+function highlight(val) {
+  stars.forEach(s => {
+    const filled = +s.dataset.val <= val;
+    s.textContent = filled ? '⭐' : '☆';
+    s.style.transform = filled ? 'scale(1.15)' : 'scale(1)';
+  });
+}
+</script>
+{% endblock %}

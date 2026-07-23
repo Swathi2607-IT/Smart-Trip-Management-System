@@ -1,0 +1,237 @@
+{% extends 'layout.html' %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+
+<!-- ── HERO SECTION ───────────────────────────────── -->
+<section class="hero">
+  <!-- Slideshow -->
+  <div class="hero-slideshow" id="heroSlideshow">
+    <div class="hero-slide active" style="background-image:url('https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1600&q=80')"></div>
+    <div class="hero-slide" style="background-image:url('https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=1600&q=80')"></div>
+    <div class="hero-slide" style="background-image:url('https://s7ap1.scene7.com/is/image/incredibleindia/hawa-mahal-jaipur-rajasthan-city-1-hero?qlt=82&ts=1742200253577')"></div>
+    <div class="hero-slide" style="background-image:url('https://s7ap1.scene7.com/is/image/incredibleindia/2-lamayuru-or-yuru-monastery-kargil-j_k-city-hero?qlt=82&ts=1726667854003')"></div>
+  </div>
+  <div class="hero-overlay"></div>
+
+  <div class="hero-content">
+    <div class="hero-badge">✨ Powered by Real-Time Intelligence</div>
+    <h1 class="hero-title">Discover Your Next<br><span>Great Adventure</span></h1>
+    <p class="hero-subtitle">Smart trip planning with live weather forecasting, day-by-day custom itineraries, and seamless guide assignment — all in one place.</p>
+    <div class="hero-actions">
+      <a href="{{ url_for('destinations') }}" class="btn btn-primary btn-lg">🌍 Explore Packages</a>
+      {% if not session.get('user_id') %}
+        <a href="{{ url_for('register') }}" class="btn btn-outline btn-lg">Start Planning Free →</a>
+      {% else %}
+        <a href="{{ url_for('user_dashboard') }}" class="btn btn-outline btn-lg">My Dashboard →</a>
+      {% endif %}
+    </div>
+
+    <div class="hero-stats">
+      <div class="hero-stat"><strong>{{ dest_count or '20' }}+</strong><span>Destinations</span></div>
+      <div class="hero-stat"><strong>{{ booking_count or '500' }}+</strong><span>Happy Travellers</span></div>
+      <div class="hero-stat"><strong>{{ guide_count or '15' }}+</strong><span>Expert Guides</span></div>
+      <div class="hero-stat"><strong>⭐ {{ avg_site_rating or '4.9' }}</strong><span>Satisfaction Score</span></div>
+    </div>
+  </div>
+
+  <div class="scroll-indicator">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+    </svg>
+    <span>Scroll to explore</span>
+  </div>
+</section>
+
+<!-- ── FEATURES ───────────────────────────────────── -->
+<section class="section" id="features" style="background:var(--gray-100)">
+  <div class="container">
+    <div class="text-center reveal">
+      <span class="section-label">Why TMS Journey?</span>
+      <h2 class="section-title">Everything You Need to Travel Smart</h2>
+      <p class="section-sub">We combine cutting-edge technology with real-world expertise to give you the most seamless travel experience.</p>
+    </div>
+    <div class="grid grid-cols-3 mt-4">
+      <div class="feature-card reveal">
+        <div class="feature-icon">🌦</div>
+        <h3 style="margin-bottom:.5rem">Live Weather Tracking</h3>
+        <p class="text-muted">Get real-time weather for your destination. Our system warns you about disruptions and adjusts your itinerary accordingly.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">🗺</div>
+        <h3 style="margin-bottom:.5rem">Smart Itinerary Generator</h3>
+        <p class="text-muted">AI-driven day-by-day plans auto-generated based on destination, duration, and weather. Rainy? We switch to indoor gems.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">🚗</div>
+        <h3 style="margin-bottom:.5rem">Dynamic Transport Pricing</h3>
+        <p class="text-muted">Choose Bus, Train, or Flight. Prices auto-calculate based on distance and passenger count for total transparency.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">🧑‍✈️</div>
+        <h3 style="margin-bottom:.5rem">Expert Guide Assignment</h3>
+        <p class="text-muted">Professional local guides auto-assigned to your trip. Multi-lingual, experienced, and always in contact.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">💳</div>
+        <h3 style="margin-bottom:.5rem">Instant Receipts & Payment</h3>
+        <p class="text-muted">Simulated UPI payment flow with detailed digital receipts. Track every rupee you spend on your trip.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">❌</div>
+        <h3 style="margin-bottom:.5rem">Smart Cancellation Policy</h3>
+        <p class="text-muted">Flexible refund policy: full refund 5+ days before, 50% within 2–5 days, auto-calculated and processed instantly.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── POPULAR DESTINATIONS ───────────────────────── -->
+<section class="section">
+  <div class="container">
+    <div class="text-center mb-5 reveal">
+      <span class="section-label">Hot Picks</span>
+      <h2 class="section-title">Popular Destinations</h2>
+      <p class="section-sub">Handpicked packages loved by thousands of travellers. Check live weather before you decide.</p>
+    </div>
+
+    <!-- Search Bar -->
+    <div style="max-width:500px;margin:0 auto 3rem;" class="reveal">
+      <div class="search-bar">
+        <input type="text" id="destSearch" placeholder="🔍 Search destinations..." oninput="filterDests()">
+        <button type="button">Search</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-3" id="destGrid">
+      {% for dest in destinations %}
+      <div class="dest-card reveal" data-name="{{ dest.name | lower }}">
+        <img src="{{ dest.image_url }}" alt="{{ dest.name }}" loading="lazy">
+        <div class="dest-card-overlay">
+          <div>
+            <span class="badge {% if dest.weather_status == 'Rainy' %}badge-rainy{% elif dest.weather_status == 'Cloudy' %}badge-cloudy{% elif dest.weather_status == 'Stormy' %}badge-stormy{% elif dest.weather_status == 'Snowy' %}badge-snowy{% elif dest.weather_status == 'Clear' %}badge-clear{% else %}badge-sunny{% endif %}" style="margin-bottom:.5rem;">
+              {{ dest.weather_icon }}
+              {{ dest.weather_temp }}°C · {{ dest.weather_status }}
+            </span>
+            <span class="badge" style="background:rgba(255,255,255,0.2) !important; color:white; margin-bottom:.5rem; margin-left:.5rem; border:1px solid rgba(255,255,255,0.3);">
+              ⭐ {{ "%.1f"|format(dest.avg_rating) }} ({{ dest.review_count }})
+            </span>
+            <div class="dest-card-name">{{ dest.name }}</div>
+            <div class="dest-card-price">From ₹{{ "{:,.0f}".format(dest.base_price) }} / day · per person</div>
+          </div>
+          <div class="dest-card-actions">
+            <a href="{{ url_for('destination_details', id=dest.id) }}" class="btn btn-sm btn-primary">View Details</a>
+            {% if session.get('user_id') %}
+              <a href="{{ url_for('book') }}?dest_id={{ dest.id }}" class="btn btn-sm btn-outline" style="border-color:rgba(255,255,255,.5);color:white;">Book Now</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% else %}
+        <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted)">
+          <div style="font-size:3rem;margin-bottom:1rem">🌍</div>
+          <p>No destinations yet. <a href="{{ url_for('login') }}">Admin can add them.</a></p>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="text-center mt-4 reveal">
+      <a href="{{ url_for('destinations') }}" class="btn btn-primary btn-lg">View All {{ total_dests or '' }} Packages →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── STATS BAR ──────────────────────────────────── -->
+<section class="stats-bar reveal">
+  <div class="container">
+    <div class="grid grid-cols-4">
+      <div class="stat-item"><strong class="num">98%</strong><span class="lbl">Customer Satisfaction</span></div>
+      <div class="stat-item"><strong class="num">3 Min</strong><span class="lbl">Average Booking Time</span></div>
+      <div class="stat-item"><strong class="num">100%</strong><span class="lbl">Secure Payments</span></div>
+      <div class="stat-item"><strong class="num">24/7</strong><span class="lbl">Guide Support</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── HOW IT WORKS ───────────────────────────────── -->
+<section class="section" style="background:var(--gray-100)">
+  <div class="container">
+    <div class="text-center mb-5 reveal">
+      <span class="section-label">Simple Process</span>
+      <h2 class="section-title">Book Your Trip in 4 Easy Steps</h2>
+    </div>
+    <div class="grid grid-cols-4">
+      {% for step in [('1','🔍','Search & Discover','Browse our curated destination packages with live weather data.'),('2','📅','Choose & Customise','Pick your dates, transport mode, and number of passengers.'),('3','💳','Pay Securely','Fast UPI payment simulation with instant confirmation.'),('4','🧳','Travel & Enjoy','Your guide will meet you. Your itinerary is ready!')] %}
+      <div class="text-center reveal" style="animation-delay:{{ loop.index0 * 0.1 }}s">
+        <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;font-size:1.75rem;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;box-shadow:0 8px 24px rgba(99,102,241,.35)">{{ step[1] }}</div>
+        <div style="font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--primary);margin-bottom:.5rem">Step {{ step[0] }}</div>
+        <h3 style="font-size:1.1rem;margin-bottom:.5rem">{{ step[2] }}</h3>
+        <p class="text-muted" style="font-size:.9rem">{{ step[3] }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA BANNER ─────────────────────────────────── -->
+{% if not session.get('user_id') %}
+<section class="section" style="background:linear-gradient(135deg,var(--primary),var(--primary-dark),#7c3aed);color:white;">
+  <div class="container text-center">
+    <h2 style="color:white;font-size:2.25rem;margin-bottom:1rem">Ready to Start Your Journey?</h2>
+    <p style="color:rgba(255,255,255,.8);font-size:1.1rem;margin-bottom:2rem;max-width:480px;margin-left:auto;margin-right:auto;">Create your free account and book your first trip in minutes. No credit card required.</p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+      <a href="{{ url_for('register') }}" class="btn btn-lg" style="background:white;color:var(--primary);">Create Free Account</a>
+      <a href="{{ url_for('destinations') }}" class="btn btn-lg btn-outline">Browse Packages</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Hero slideshow
+let currentSlide = 0;
+const slides = document.querySelectorAll('.hero-slide');
+function nextSlide() {
+  slides[currentSlide].classList.remove('active');
+  currentSlide = (currentSlide + 1) % slides.length;
+  slides[currentSlide].classList.add('active');
+}
+setInterval(nextSlide, 5500);
+
+// Destination search filter
+function filterDests() {
+  const q = document.getElementById('destSearch').value.toLowerCase();
+  document.querySelectorAll('#destGrid .dest-card').forEach(el => {
+    el.style.display = el.dataset.name.includes(q) ? '' : 'none';
+  });
+}
+
+// Counter animation for stats
+function animateCounters() {
+  document.querySelectorAll('.num').forEach(el => {
+    const target = el.textContent;
+    const numMatch = target.match(/[\d,]+/);
+    if (!numMatch) return;
+    const end = parseInt(numMatch[0].replace(',',''));
+    let start = 0;
+    const step = end / 50;
+    const timer = setInterval(() => {
+      start = Math.min(start + step, end);
+      el.textContent = target.replace(numMatch[0], Math.floor(start).toLocaleString('en-IN'));
+      if (start >= end) clearInterval(timer);
+    }, 30);
+  });
+}
+
+const statsSection = document.querySelector('.stats-bar');
+if (statsSection) {
+  const statsObs = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) { animateCounters(); statsObs.disconnect(); }
+  });
+  statsObs.observe(statsSection);
+}
+</script>
+{% endblock %}

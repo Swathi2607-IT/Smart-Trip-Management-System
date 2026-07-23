@@ -1,0 +1,247 @@
+{% extends 'layout.html' %}
+{% block title %}{{ dest.name }}{% endblock %}
+
+{% block content %}
+
+<!-- Hero with destination image -->
+<div style="height:55vh;min-height:420px;background-image:url('{{ dest.image_url }}');background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-end">
+  <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.85) 0%,rgba(0,0,0,.2) 60%)"></div>
+  <div class="container" style="position:relative;z-index:2;padding-bottom:2.5rem;color:white">
+    <a href="{{ url_for('destinations') }}" style="color:rgba(255,255,255,.7);font-size:.875rem;display:inline-flex;align-items:center;gap:.4rem;margin-bottom:1rem">← Back to All Packages</a>
+    <h1 style="color:white;font-size:clamp(2rem,5vw,3.25rem);margin-bottom:.75rem">{{ dest.name }}</h1>
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+      <span class="badge {% if dest.weather_status == 'Rainy' %}badge-rainy{% elif dest.weather_status == 'Cloudy' %}badge-cloudy{% elif dest.weather_status == 'Stormy' %}badge-stormy{% elif dest.weather_status == 'Snowy' %}badge-snowy{% elif dest.weather_status == 'Clear' %}badge-clear{% else %}badge-sunny{% endif %}" style="font-size:.9rem;padding:.4rem 1rem">
+        {{ dest.weather_icon }}
+        {{ dest.weather_temp }}°C · {{ dest.weather_status }}
+      </span>
+      <span style="color:rgba(255,255,255,.8);font-size:1.1rem;font-weight:600">From ₹{{ "{:,.0f}".format(dest.base_price) }} / day / person</span>
+    </div>
+  </div>
+</div>
+
+<div class="container section-sm">
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:2.5rem;align-items:start">
+
+    <!-- Left Column -->
+    <div>
+      <!-- Weather Alert -->
+      {% if is_bad_weather %}
+      <div class="alert alert-warning" style="margin-bottom:2rem">
+        ⚠️ <strong>Travel Advisory:</strong> Current weather conditions in {{ dest.name }} are {{ dest.weather_status }}. Consider travel insurance or rescheduling.
+      </div>
+      {% else %}
+      <div class="alert alert-success" style="margin-bottom:2rem">
+        ✅ <strong>Ideal for Travel:</strong> {{ dest.name }} is currently experiencing {{ dest.weather_status }} conditions ({{ dest.weather_temp }}°C). Perfect time to visit!
+      </div>
+      {% endif %}
+
+      <!-- Description -->
+      <div class="glass-panel mb-4">
+        <h2 style="margin-bottom:1rem">📖 About {{ dest.name }}</h2>
+        <p style="color:var(--text-muted);line-height:1.8;">{{ dest.description }}</p>
+      </div>
+
+      <!-- Places to Visit -->
+      {% if places %}
+      <h2 style="margin-bottom:1.25rem">📍 Places to Visit</h2>
+      <div class="grid grid-cols-2" style="gap:1rem;margin-bottom:2rem">
+        {% for place in places %}
+        <div class="card" style="flex-direction:row;align-items:center;padding:.75rem;gap:.75rem;border-radius:var(--radius-md)">
+          {% if place.image_url %}
+          <img src="{{ place.image_url }}" alt="{{ place.name }}" style="width:70px;height:70px;border-radius:var(--radius-md);object-fit:cover;flex-shrink:0">
+          {% endif %}
+          <div>
+            <div style="font-weight:700;font-size:.9375rem">{{ place.name }}</div>
+            <div style="font-size:.8rem;color:var(--text-muted);margin-top:.2rem">
+              {% if place.category == 'Beach' %}🏖{% elif place.category == 'Church' %}⛪{% elif place.category == 'Fort' %}🏰{% elif place.category == 'Waterfall' %}💧{% elif place.category == 'Temple' %}🛕{% else %}📍{% endif %}
+              {{ place.category }}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Recommended Transport -->
+      <div class="glass-panel">
+        <h2 style="margin-bottom:1.25rem">🚗 Recommended Transport</h2>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem">
+          {% for t in transports %}
+          <div style="border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:1rem;text-align:center">
+            <div style="font-size:1.75rem;margin-bottom:.5rem">{% if t.mode=='Bus' %}🚌{% elif t.mode=='Train' %}🚆{% else %}✈️{% endif %}</div>
+            <div style="font-weight:700">{{ t.type }}</div>
+            <div style="color:var(--primary);font-weight:600;font-size:.9rem;margin-top:.25rem">₹{{ "{:,.0f}".format(t.average_cost) }}</div>
+            <div style="font-size:.75rem;color:var(--text-muted);margin-top:.25rem">per person</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column — Booking Card -->
+    <div style="position:sticky;top:calc(var(--nav-h) + 1.5rem)">
+      <div class="glass-panel" style="border:2px solid rgba(99,102,241,.2)">
+        <h3 style="margin-bottom:1.5rem;font-size:1.25rem">📅 Book This Destination</h3>
+
+        <div style="margin-bottom:1.25rem">
+          <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:.25rem">Base Price</div>
+          <div style="font-size:2rem;font-weight:800;color:var(--primary)">₹{{ "{:,.0f}".format(dest.base_price) }}<span style="font-size:1rem;font-weight:400;color:var(--text-muted)"> /day/person</span></div>
+        </div>
+
+        <div style="background:var(--gray-100);border-radius:var(--radius-md);padding:1rem;margin-bottom:1.5rem;font-size:.875rem">
+          <div style="display:flex;justify-content:space-between;margin-bottom:.4rem">
+            <span style="color:var(--text-muted)">📍 Places to see</span>
+            <strong>{{ places | length }}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:.4rem">
+            <span style="color:var(--text-muted)">🌤 Weather</span>
+            <strong>{{ dest.weather_status }}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span style="color:var(--text-muted)">✈️ Transport options</span>
+            <strong>3</strong>
+          </div>
+        </div>
+
+        {% if session.get('user_id') %}
+          <div style="display:flex; flex-direction:column; gap:.75rem">
+            <a href="{{ url_for('preview_itinerary', id=dest.id) }}" class="btn btn-secondary btn-full btn-lg" style="box-shadow:none; border:2px solid var(--primary); color:var(--primary); background:transparent">
+              🗺 View Sample Itinerary
+            </a>
+            <a href="{{ url_for('book') }}?dest_id={{ dest.id }}" class="btn btn-primary btn-full btn-lg">
+              🗓 Book Now
+            </a>
+          </div>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="btn btn-primary btn-full btn-lg">Login to Book</a>
+          <a href="{{ url_for('register') }}" class="btn btn-secondary btn-full" style="margin-top:.75rem">Create Free Account</a>
+        {% endif %}
+
+        <p style="text-align:center;font-size:.75rem;color:var(--text-muted);margin-top:1rem">
+          🔒 Secure Booking · Free Cancellation (5+ days prior)
+        </p>
+      </div>
+
+      <!-- 5-Day Weather Forecast -->
+      <div class="glass-panel mt-4">
+        <h3 style="margin-bottom:1.25rem;font-size:1.1rem">🌦 5-Day Forecast</h3>
+        {% if weather_forecast %}
+        <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; text-align:center">
+          {% for day in weather_forecast %}
+          <div style="padding:.75rem .25rem; background:rgba(255,255,255,0.03); border-radius:var(--radius-sm); border:1px solid var(--gray-200)">
+            <div style="font-size:.65rem; font-weight:700; color:var(--text-muted); margin-bottom:.3rem">{{ day.day }}</div>
+            <div style="font-size:1.25rem; margin-bottom:.1rem">{{ day.icon }}</div>
+            <div style="font-weight:800; font-size:.85rem">{{ day.temp }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p style="color:var(--text-muted);font-size:.85rem">Weather data unavailable.</p>
+        {% endif %}
+      </div>
+
+      <!-- Future Weather Prediction (New) -->
+      <div class="glass-panel mt-4" style="border: 1px dashed var(--primary); background: rgba(99,102,241,0.02)">
+        <h3 style="margin-bottom:1rem;font-size:1.1rem">🔍 Check Travel Date Weather</h3>
+        <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:1rem">
+          Planning a trip for next month? Select your date to see the predicted conditions.
+        </p>
+        <div style="display:flex; gap:.5rem">
+          <input type="date" id="checkFutureDate" class="form-control" style="flex:1; font-size:.9rem" min="{{ today_date }}">
+          <button onclick="checkFutureWeather()" id="btnCheckWeather" class="btn btn-secondary" style="padding:.5rem 1rem">Check</button>
+        </div>
+
+        <div id="predictionResult" style="margin-top:1.25rem; display:none; padding:1rem; background:white; border-radius:var(--radius-md); border:1px solid var(--gray-200); animation: fadeIn .3s ease">
+          <div style="display:flex; align-items:center; gap:1rem">
+            <div id="predIcon" style="font-size:2.5rem"></div>
+            <div>
+              <div id="predTemp" style="font-weight:800; font-size:1.5rem; color:var(--primary)"></div>
+              <div id="predLabel" style="font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.02em; color:var(--text-muted)"></div>
+            </div>
+          </div>
+          <div id="predStatus" style="margin-top:.5rem; font-size:.8rem; color:var(--text-main); font-weight:600"></div>
+        </div>
+      </div>
+
+      <!-- Recent Reviews -->
+      <div class="glass-panel mt-4">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem">
+          <h3 style="margin:0;font-size:1.1rem">⭐ Reviews</h3>
+          <div style="font-weight:800; color:var(--amber-500); font-size:1rem">
+            {{ avg_rating }}/5
+          </div>
+        </div>
+        <div style="max-height: 250px; overflow-y: auto; padding-right: .5rem;">
+          {% if reviews %}
+            {% for r in reviews %}
+            <div style="padding:.75rem 0; border-bottom:1px solid var(--gray-100)">
+              <div style="display:flex; justify-content:space-between; margin-bottom:.25rem">
+                <span style="font-weight:700; font-size:.85rem">{{ r.user_name }}</span>
+                <span style="color:var(--amber-500);font-size:.75rem">{{ "★" * r.rating }}{{ "☆" * (5 - r.rating) }}</span>
+              </div>
+              <p style="font-size:.8rem; color:var(--text-main); margin:0; line-height:1.4">"{{ r.comment }}"</p>
+            </div>
+            {% endfor %}
+          {% else %}
+            <p style="color:var(--text-muted); font-size:.85rem">No reviews yet.</p>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+<script>
+async function checkFutureWeather() {
+  const dateInput = document.getElementById('checkFutureDate');
+  const resultDiv = document.getElementById('predictionResult');
+  const btn = document.getElementById('btnCheckWeather');
+  
+  if (!dateInput.value) {
+    alert("Please select a date first.");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '...';
+  
+  try {
+    const lat = "{{ dest.latitude }}";
+    const lon = "{{ dest.longitude }}";
+    const response = await fetch(`/api/weather-prediction?lat=${lat}&lon=${lon}&date=${dateInput.value}`);
+    const data = await response.json();
+    
+    if (data.error) {
+      alert("Weather prediction for this date is currently unavailable.");
+    } else {
+      document.getElementById('predIcon').textContent = data.icon;
+      document.getElementById('predTemp').textContent = data.temp;
+      document.getElementById('predLabel').textContent = data.label;
+      
+      let statusText = "";
+      if (data.icon === '☀️') statusText = "Sunny & Clear — Perfect for outdoor sights!";
+      else if (data.icon === '🌧️' || data.icon === '🌦️') statusText = "Likely Rainy — Carry an umbrella and plan indoor visits.";
+      else if (data.icon === '⛈️') statusText = "Potential Storms — Check local reports closer to the date.";
+      else if (data.icon === '❄️') statusText = "Snowy conditions — Great for winter views!";
+      else statusText = "Moderate conditions expected.";
+      
+      document.getElementById('predStatus').textContent = statusText;
+      resultDiv.style.display = 'block';
+    }
+  } catch (err) {
+    console.error(err);
+    alert("An error occurred while fetching the prediction.");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Check';
+  }
+}
+</script>
+{% endblock %}

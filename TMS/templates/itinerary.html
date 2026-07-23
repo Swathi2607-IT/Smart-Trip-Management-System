@@ -1,0 +1,146 @@
+{% extends 'layout.html' %}
+{% block title %}Itinerary — Booking #{{ booking.id }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    {% if is_preview %}
+    <h1>🗺 Sample Pre-Booking Itinerary</h1>
+    <p>AI-Optimized preview based on the next 3 days of forecast</p>
+    {% else %}
+    <h1>🗺 Your Trip Itinerary</h1>
+    <p>Day-by-day plan for Booking #{{ booking.id }} · {{ booking.duration }} days</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="container section-sm">
+  <div style="display:grid;grid-template-columns:1fr 300px;gap:2rem;align-items:start">
+
+    <!-- Timeline -->
+    <div>
+      <h2 style="margin-bottom:2rem;font-size:1.35rem">📅 Day-by-Day Plan</h2>
+      <div class="timeline">
+        {% for day_num, day_data in itinerary.items() %}
+        <div class="itinerary-day">
+          <div class="itinerary-day-marker">
+            <div class="day-circle">D{{ day_num }}</div>
+            {% if not loop.last %}<div class="day-line"></div>{% endif %}
+          </div>
+          <div class="itinerary-day-content">
+            <div style="font-weight:700;font-size:1.1rem;margin-bottom:.25rem">Day {{ day_num }}</div>
+            <div class="itinerary-date">📅 {{ day_data.date_str }}</div>
+            
+            {% if day_data.alert %}
+            <div style="margin-top:.75rem;padding:.5rem .75rem;background:rgba(99,102,241,0.1);color:var(--primary);font-size:.8rem;border-radius:var(--radius-sm);border:1px solid rgba(99,102,241,0.2);display:inline-block;font-weight:600">
+              {{ day_data.alert }}
+            </div>
+            {% endif %}
+
+            <div class="itinerary-places" style="margin-top:1rem;display:grid;grid-template-columns:1fr;gap:1rem">
+              {% for place in day_data.slots %}
+              <div class="itinerary-place-card" style="display:flex;align-items:center;background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-md);overflow:hidden;gap:1rem;padding:.5rem">
+                {% if place.image_url %}
+                <img src="{{ place.image_url }}" alt="{{ place.name }}" style="width:100px;height:100px;object-fit:cover;border-radius:var(--radius-sm);flex-shrink:0" loading="lazy">
+                {% endif %}
+                <div style="flex:1">
+                  <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--primary);font-weight:800;margin-bottom:.2rem">
+                    ⏰ {{ place.time }}
+                  </div>
+                  <div style="font-weight:700;font-size:1rem">{{ place.name }}</div>
+                  <div style="font-size:.8rem;color:var(--text-muted)">{{ place.category }}</div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Info Sidebar -->
+    <div style="position:sticky;top:calc(var(--nav-h) + 1.5rem);display:flex;flex-direction:column;gap:1.25rem">
+
+      <!-- Trip Summary -->
+      <div class="glass-panel">
+        <h3 style="margin-bottom:1.25rem;font-size:1rem">🧭 Trip Summary</h3>
+        <div style="display:flex;flex-direction:column;gap:.75rem;font-size:.9rem">
+          <div style="display:flex;justify-content:space-between">
+            <span class="text-muted">Start Date</span>
+            <strong>{{ booking.start_date }}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span class="text-muted">End Date</span>
+            <strong>{{ booking.end_date }}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span class="text-muted">Duration</span>
+            <strong>{{ booking.duration }} days</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span class="text-muted">Passengers</span>
+            <strong>{{ booking.passengers }}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span class="text-muted">Transport</span>
+            <strong>
+              {% if booking.transport_mode=='Bus' %}🚌{% elif booking.transport_mode=='Train' %}🚆{% elif booking.transport_mode=='Flight' %}✈️{% else %}🚶{% endif %}
+              {{ booking.transport_mode }}
+            </strong>
+          </div>
+          <div class="divider" style="margin:.25rem 0"></div>
+          <div style="display:flex;justify-content:space-between">
+            <span class="text-muted">Total Paid</span>
+            <strong style="color:var(--primary);font-size:1.1rem">₹{{ "{:,.0f}".format(booking.total_cost) }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Guide Info (New) -->
+      {% if booking.guide_name %}
+      <div class="glass-panel" style="background:rgba(99,102,241,0.05);border:1px solid var(--primary)">
+        <h3 style="margin-bottom:1rem;font-size:1rem">🧑‍✈️ Your Expert Guide</h3>
+        <div style="display:flex;align-items:center;gap:1rem">
+          <div style="width:50px;height:50px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:1.5rem">🧑‍✈️</div>
+          <div>
+            <div style="font-weight:700">{{ booking.guide_name }}</div>
+            <a href="tel:{{ booking.guide_phone }}" style="font-size:.85rem;color:var(--primary);font-weight:600">📱 {{ booking.guide_phone }}</a>
+          </div>
+        </div>
+        <p style="font-size:.7rem;color:var(--text-muted);margin-top:.75rem">Your guide will coordinate with you on your travel date.</p>
+      </div>
+      {% endif %}
+
+      <!-- Tips -->
+      <div style="background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(16,185,129,.1));border:1px solid rgba(99,102,241,.2);border-radius:var(--radius-lg);padding:1.25rem;font-size:.85rem">
+        <div style="font-weight:700;margin-bottom:.75rem;color:var(--primary)">💡 Travel Pro Tips</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:.5rem;color:var(--text-muted)">
+          <li>✅ Arrive at each spot early to avoid crowds</li>
+          <li>✅ Keep local transport numbers handy</li>
+          <li>✅ Check local weather each morning</li>
+          <li>✅ Carry cash for local vendors</li>
+          <li>✅ Stay hydrated and carry a first-aid kit</li>
+        </ul>
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex;flex-direction:column;gap:.75rem">
+        {% if is_preview %}
+        <a href="{{ url_for('book') }}?dest_id={{ dest_id }}" class="btn btn-primary btn-full">
+          🗓 Book This Trip Now
+        </a>
+        <a href="{{ url_for('destination_details', id=dest_id) }}" class="btn btn-secondary btn-full">
+          ← Back to Destination
+        </a>
+        {% else %}
+        <button onclick="window.print()" class="btn btn-secondary btn-full">🖨 Print Itinerary</button>
+        <a href="{{ url_for('my_bookings') }}" class="btn btn-primary btn-full">← My Bookings</a>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
